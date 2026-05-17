@@ -596,7 +596,7 @@
                 1. SMALL Numbers fall FAST.<br>
                 2. BIG Numbers fall SLOW.<br>
                 3. Wrong Input = <strong>-1 Heart</strong>.<br>
-                4. Floor Impact = <strong>-2 Hearts</strong>.</p>
+                4. Floor Impact = <strong>-1 Heart</strong>.</p>
 
             <div style="display:flex; gap: 20px;">
                 <button class="btn" onclick="startGame()">INITIALIZE</button>
@@ -1106,8 +1106,9 @@
 
             let val = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
 
-            let baseLevelSpeed = (30 + (state.level * 5)) * (canvas.height / 600);
-            let valMultiplier = 1 + (15 / (val + 5));
+            let baseLevelSpeed = 30 * state.speedMultiplier * (canvas.height / 600);
+            let tier = Math.ceil(val / 10); // 1-10 -> 1, 11-20 -> 2, etc.
+            let valMultiplier = 4 / tier;
             let speed = baseLevelSpeed * valMultiplier;
 
             state.blocks.push({
@@ -1134,6 +1135,8 @@
         function loseLife(amount) {
             state.lifelines -= amount;
             if (state.lifelines < 0) state.lifelines = 0;
+
+            state.speedMultiplier = 1;
 
             const container = document.getElementById('game-container');
             container.classList.add('flash-red');
@@ -1162,7 +1165,7 @@
             state.score += state.reactorTotal;
             state.reactorTotal = 0;
             state.level++;
-            state.speedMultiplier += 0.1;
+            state.speedMultiplier += 0.4;
             state.spawnInterval = Math.max(800, 2500 - (state.level * 150));
             state.bankTarget = Math.floor(state.bankTarget * 1.5);
 
@@ -1195,13 +1198,9 @@
 
             state.spawnTimer += dt * 1000;
 
-            const maxBlocks = state.level < 5 ? 2 : 3;
-
-            if (state.spawnTimer > state.spawnInterval) {
-                if (state.blocks.length < maxBlocks) {
-                    spawnBlock();
-                    state.spawnTimer = 0;
-                }
+            if (state.blocks.length === 0) {
+                spawnBlock();
+                state.spawnTimer = 0;
             }
 
             for (let i = state.blocks.length - 1; i >= 0; i--) {
@@ -1211,7 +1210,7 @@
                 if (b.y > canvas.height) {
                     state.blocks.splice(i, 1);
                     playSound('error');
-                    loseLife(2);
+                    loseLife(1);
                 }
             }
 
