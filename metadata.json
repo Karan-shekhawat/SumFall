@@ -1,0 +1,8 @@
+{
+  "name": "SumFall",
+  "description": "Arcade mental math training reactor featuring Factor Matrix (tables 12–30), Square Matrix (2 to 50 with square roots), Cube Matrix (2 to 21, 25 with cube roots), Accumulator Protocol, and Tetris Multiplication Cascade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

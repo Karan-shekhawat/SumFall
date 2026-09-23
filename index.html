@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SumFall: The Accumulator</title>
+    <title>SumFall</title>
+    <meta name="description" content="Arcade mental math training reactor featuring Factor Matrix (tables 12–30), Square Matrix (2 to 50 with square roots), Cube Matrix (2 to 21, 25 with cube roots), Accumulator Protocol, and Tetris Multiplication Cascade.">
+    <meta property="og:title" content="SumFall">
+    <meta property="og:description" content="Arcade mental math training reactor featuring Factor Matrix (tables 12–30), Square Matrix (2 to 50 with square roots), Cube Matrix (2 to 21, 25 with cube roots), Accumulator Protocol, and Tetris Multiplication Cascade.">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -168,19 +171,24 @@
         #profile-screen,
         #create-profile-screen,
         #leaderboard-screen,
-        #welcome-screen {
+        #welcome-screen,
+        #victory-screen,
+        #settings-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(13, 14, 18, 0.95);
+            background: rgba(10, 13, 18, 0.96);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            padding: 24px 16px;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -192,9 +200,9 @@
         }
 
         p {
-            font-size: 18px;
-            line-height: 1.6;
-            color: #aaa;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #94a3b8;
             max-width: 600px;
         }
 
@@ -202,38 +210,500 @@
             background: var(--neon-pink);
             color: white;
             border: none;
-            padding: 15px 40px;
+            padding: 14px 34px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             transition: all 0.2s;
             text-transform: uppercase;
             letter-spacing: 2px;
             box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
-            margin-top: 20px;
+            border-radius: 4px;
         }
 
         .btn:hover {
-            transform: scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.7);
         }
 
         .btn:active {
-            transform: scale(0.95);
+            transform: translateY(0);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: rgba(15, 23, 42, 0.7);
             border: 1px solid var(--neon-cyan);
             color: var(--neon-cyan);
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 15px;
+            padding: 12px 24px;
+            font-size: 15px;
             cursor: pointer;
             box-shadow: none;
+            border-radius: 4px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
 
         .btn-secondary:hover {
+            background: rgba(0, 243, 255, 0.15);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+        }
+
+        .btn-mode {
+            background: #14171d;
+            border: 1px solid #2e3642;
+            color: #94a3b8;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 4px;
+        }
+
+        .btn-mode.active {
+            background: rgba(0, 243, 255, 0.16);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+        }
+
+        .btn-mode:hover:not(.active) {
+            border-color: #4b5563;
+            color: #f1f5f9;
+            background: #1a1f27;
+        }
+
+        .btn-submode {
+            background: #0d1117;
+            border: 1px dashed #334155;
+            color: #8899aa;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            border-radius: 4px;
+        }
+
+        .btn-submode.active {
+            background: rgba(57, 255, 20, 0.16);
+            border-color: var(--neon-green);
+            border-style: solid;
+            color: var(--neon-green);
+            box-shadow: 0 0 12px rgba(57, 255, 20, 0.3);
+        }
+
+        .btn-submode:hover:not(.active) {
+            border-color: #64748b;
+            color: #ffffff;
+            background: #131922;
+        }
+
+        /* --- STRUCTURED SCREEN CARD WRAPPER --- */
+        .screen-card {
+            background: rgba(13, 17, 23, 0.92);
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 28px 32px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* --- MAIN SCREEN HEADER BAR & COMMAND CONSOLE --- */
+        .start-header-bar {
+            width: 100%;
+            max-width: 780px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+
+        .player-badge-card {
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-nav-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-header {
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-header:hover {
+            background: rgba(0, 243, 255, 0.16);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        .btn-micro {
+            background: transparent;
+            border: 1px solid #4b5563;
+            color: #9ca3af;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .btn-micro:hover {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .btn-link {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1.2px;
+            cursor: pointer;
+            transition: color 0.2s;
+            text-decoration: underline;
+        }
+
+        .btn-link:hover {
+            color: var(--neon-cyan);
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .mode-console-card {
+            width: 100%;
+            max-width: 780px;
+            background: rgba(13, 17, 24, 0.9);
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 24px 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .console-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .console-header-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #64748b;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .active-badge {
             background: rgba(0, 243, 255, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .protocol-button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        .subprotocol-button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .console-summary-box {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            padding: 12px 18px;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- SETTINGS MENU UI --- */
+        .settings-modal-card {
+            width: 100%;
+            max-width: 800px;
+            max-height: 88vh;
+            background: #0d121a;
+            border: 1px solid var(--neon-cyan);
+            border-radius: 8px;
+            padding: 24px 28px;
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1f2937;
+            margin-bottom: 18px;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: 1px solid #374151;
+            color: #9ca3af;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .settings-tabs-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 12px;
+        }
+
+        .settings-tab-btn {
+            background: #131923;
+            border: 1px solid #243042;
+            color: #94a3b8;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1.2px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .settings-tab-btn.active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+        }
+
+        .settings-panel {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .settings-panel.active {
+            display: flex;
+        }
+
+        .panel-section-title {
+            font-size: 12px;
+            color: var(--neon-yellow);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(17, 24, 39, 0.65);
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 12px 16px;
+            gap: 16px;
+        }
+
+        .setting-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .setting-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f1f5f9;
+            display: block;
+        }
+
+        .setting-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 3px;
+            display: block;
+            line-height: 1.4;
+        }
+
+        .setting-input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setting-input-group input[type="range"] {
+            width: 140px;
+            accent-color: var(--neon-cyan);
+            cursor: pointer;
+        }
+
+        .setting-input-group input[type="number"] {
+            background: #0a0d13;
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .setting-val-badge {
+            min-width: 48px;
+            text-align: center;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .preset-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(10, 15, 24, 0.5);
+            border-radius: 4px;
+            border: 1px dashed #243042;
+        }
+
+        .preset-label {
+            font-size: 10px;
+            color: #64748b;
+            letter-spacing: 1.5px;
+            margin-right: 4px;
+        }
+
+        .preset-pill {
+            background: #16202e;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-pill:hover {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            background: rgba(57, 255, 20, 0.1);
+        }
+
+        .settings-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #1f2937;
+        }
+
+        .btn-save {
+            background: var(--neon-green);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.35);
+        }
+
+        .btn-save:hover {
+            box-shadow: 0 0 22px rgba(57, 255, 20, 0.7);
+        }
+
+        .btn-subtle {
+            background: transparent;
+            border: 1px solid #374151;
+            color: #9ca3af;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-subtle:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #6b7280;
         }
 
         /* --- PROFILE & LEADERBOARD UI --- */
@@ -494,127 +964,544 @@
 
         <!-- Pause Overlay -->
         <div id="pause-overlay" class="hidden">
-            <h1 style="color: var(--neon-yellow)">SYSTEM PAUSED</h1>
-            <button class="btn" onclick="togglePause()">RESUME</button>
-            <button class="btn btn-secondary" onclick="showStartScreen()">ABORT MISSION</button>
+            <div class="screen-card">
+                <h1 style="color: var(--neon-yellow); margin-bottom: 8px;">SYSTEM PAUSED</h1>
+                <p id="pause-mode-info" style="color: var(--neon-cyan); font-size: 14px; margin-bottom: 24px;">TACTICAL SIMULATION SUSPENDED</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px; max-width: 280px; margin: 0 auto;">
+                    <button class="btn" onclick="togglePause()">RESUME PROTOCOL</button>
+                    <button class="btn-secondary" onclick="showSettingsScreen(state.primaryMode)">⚙️ CONFIGURE PROTOCOL</button>
+                    <button class="btn-secondary" onclick="abortToMainMenu()">RETURN TO MAIN MENU</button>
+                </div>
+            </div>
         </div>
 
         <!-- Welcome Screen (Existing User) -->
         <div id="welcome-screen" class="hidden">
-            <h1 style="color: var(--neon-cyan)">IDENTITY VERIFIED</h1>
-            <p>Welcome back, <span id="welcome-name" style="color: var(--neon-green)">OPERATIVE</span></p>
+            <div class="screen-card">
+                <h1 style="color: var(--neon-cyan); margin-bottom: 8px;">IDENTITY VERIFIED</h1>
+                <p style="margin-bottom: 20px;">Welcome back, operative <span id="welcome-name" style="color: var(--neon-green); font-weight: bold;">OPERATIVE</span></p>
 
-            <div style="margin: 30px 0;">
-                <button class="btn" onclick="confirmIdentity()">CONTINUE</button>
-            </div>
+                <div style="margin-bottom: 24px;">
+                    <button class="btn" onclick="confirmIdentity()">PROCEED TO CONSOLE</button>
+                </div>
 
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn btn-secondary" style="font-size: 16px; padding: 10px 20px;"
-                    onclick="showProfileScreen()">CHANGE IDENTITY</button>
-                <button class="btn btn-secondary" style="font-size: 16px; padding: 10px 20px;"
-                    onclick="showCreateProfile()">CREATE IDENTITY</button>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px;" onclick="showProfileScreen()">SWITCH OPERATIVE</button>
+                    <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px;" onclick="showCreateProfile()">NEW IDENTITY</button>
+                </div>
             </div>
         </div>
 
         <!-- Profile Selection Screen (Change Identity) -->
         <div id="profile-screen" class="hidden">
-            <h1 style="color: var(--neon-yellow)">SELECT IDENTITY</h1>
-            <p>Available Operator Profiles</p>
+            <div class="screen-card">
+                <h1 style="color: var(--neon-yellow); margin-bottom: 8px;">OPERATIVE DOSSIERS</h1>
+                <p style="margin-bottom: 16px;">Select active profile credentials or register anew.</p>
 
-            <div id="profile-list">
-                <!-- Profile items injected here -->
-            </div>
+                <div id="profile-list" style="width: 100%; max-height: 280px;">
+                    <!-- Profile items injected here -->
+                </div>
 
-            <div style="margin-top: 20px;">
-                <button class="btn btn-secondary" onclick="showWelcomeScreen()">CANCEL</button>
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                    <button class="btn" style="font-size: 16px; padding: 10px 20px;" onclick="showCreateProfile()">+ NEW IDENTITY</button>
+                    <button class="btn-secondary" onclick="showStartScreen()">RETURN TO MAIN MENU</button>
+                </div>
             </div>
         </div>
 
         <!-- Create Profile Screen -->
         <div id="create-profile-screen" class="hidden">
-            <h1 style="color: var(--neon-yellow)">NEW IDENTITY</h1>
-            <p>Enter Codename</p>
-            <input type="text" id="new-profile-input" placeholder="ENTER CODENAME" maxlength="12">
-            <br>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-                <button class="btn" onclick="createNewProfile()">CONFIRM</button>
-                <button class="btn btn-secondary" onclick="showWelcomeScreen()">CANCEL</button>
+            <div class="screen-card">
+                <h1 style="color: var(--neon-yellow); margin-bottom: 8px;">NEW OPERATIVE</h1>
+                <p style="margin-bottom: 16px;">Enter codename for authentication:</p>
+                <input type="text" id="new-profile-input" placeholder="ENTER CODENAME" maxlength="12" style="margin-top: 0; margin-bottom: 20px;">
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn" onclick="createNewProfile()">CONFIRM IDENTITY</button>
+                    <button class="btn-secondary" onclick="showProfileScreen()">BACK TO PROFILES</button>
+                    <button class="btn-secondary" onclick="showStartScreen()">MAIN MENU</button>
+                </div>
             </div>
         </div>
 
         <!-- Leaderboard Screen -->
         <div id="leaderboard-screen" class="hidden">
-            <h1 style="color: var(--neon-yellow)">CLASSIFIED RECORDS</h1>
-            <p style="margin-bottom: 20px;">Top Operatives</p>
+            <div class="screen-card" style="max-width: 600px;">
+                <h1 style="color: var(--neon-yellow); margin-bottom: 6px;">CLASSIFIED RECORDS</h1>
+                <p style="margin-bottom: 16px;">Top Ranking Operatives // Quantum Simulation</p>
 
-            <div id="leaderboard-list">
-                <!-- Leaderboard items injected here -->
-            </div>
+                <div id="leaderboard-list" style="width: 100%; max-height: 320px;">
+                    <!-- Leaderboard items injected here -->
+                </div>
 
-            <div style="display:flex; gap: 20px; justify-content: center; margin-top: 20px;">
-                <button class="btn" onclick="startGame()">RESTART MISSION</button>
-                <button class="btn btn-secondary" onclick="showStartScreen()">MAIN MENU</button>
+                <div style="display: flex; gap: 14px; justify-content: center; margin-top: 24px; flex-wrap: wrap;">
+                    <button class="btn" onclick="startGame()">START MISSION</button>
+                    <button class="btn-secondary" onclick="showStartScreen()">RETURN TO MAIN MENU</button>
+                </div>
             </div>
         </div>
 
         <!-- Level Up Screen (Pause) -->
         <div id="level-screen" class="hidden">
-            <h1 style="color: var(--neon-green)">SYSTEM VENTED</h1>
-            <p>Reactor Cooled. Buffer Cleared.</p>
+            <div class="screen-card">
+                <h1 id="level-screen-title" style="color: var(--neon-green); margin-bottom: 6px;">SYSTEM VENTED</h1>
+                <p id="level-screen-subtitle" style="margin-bottom: 16px;">Reactor Cooled. Buffer Cleared.</p>
 
-            <!-- REWARD SECTION -->
-            <div
-                style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--neon-cyan); text-align: center; padding: 15px; margin: 20px 0; width: 80%; box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);">
-                <div style="color: var(--neon-cyan); font-size: 12px; letter-spacing: 2px; margin-bottom: 5px;">OPERATOR
-                    RANK STATUS</div>
-                <div id="rank-title" style="font-size: 28px; color: #fff; text-shadow: 0 0 10px var(--neon-cyan);">DATA
-                    CLERK</div>
+                <!-- REWARD SECTION -->
+                <div style="background: rgba(0, 243, 255, 0.08); border: 1px solid var(--neon-cyan); text-align: center; padding: 14px; margin-bottom: 16px; border-radius: 4px;">
+                    <div style="color: var(--neon-cyan); font-size: 11px; letter-spacing: 2px; margin-bottom: 4px;">OPERATOR RANK STATUS</div>
+                    <div id="rank-title" style="font-size: 24px; color: #fff; text-shadow: 0 0 10px var(--neon-cyan);">DATA CLERK</div>
+                </div>
+
+                <p style="text-align: center; color: var(--neon-green); font-weight: bold; margin-bottom: 14px;">+1 LIFELINE AWARDED</p>
+
+                <div style="margin-bottom: 20px;">
+                    <div class="hud-label" id="next-level-label">Entering Stage</div>
+                    <div class="stat-val" id="next-level-val" style="text-align: center; color: var(--neon-yellow); font-size: 28px;">2</div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn" id="next-level-btn" onclick="nextLevel()">Initiate Next Wave</button>
+                    <button class="btn-secondary" onclick="abortToMainMenu()">ABORT TO MAIN MENU</button>
+                </div>
             </div>
-
-            <p style="text-align: center; color: var(--neon-green); font-weight: bold;">+1 LIFELINE AWARDED</p>
-
-            <div style="margin: 10px 0;">
-                <div class="hud-label">Entering Level</div>
-                <div class="stat-val" id="next-level-val" style="text-align: center; color: var(--neon-yellow)">2</div>
-            </div>
-            <button class="btn" onclick="nextLevel()">Initiate Next Wave</button>
         </div>
 
-        <!-- Start Screen -->
+        <!-- Start Screen (Command Hub & Mode Selector) -->
         <div id="start-screen" class="hidden">
-            <div class="player-badge">
-                <div class="player-name" id="display-name">UNKNOWN</div>
-                <div class="player-best">HIGH SCORE: <span id="display-highscore">0</span></div>
-                <button class="btn-secondary" style="font-size: 10px; padding: 5px 10px; margin-top:5px;"
-                    onclick="showProfileScreen()">SWITCH USER</button>
+            <!-- Top Command Header Bar -->
+            <div class="start-header-bar">
+                <div class="player-badge-card">
+                    <div style="text-align: left;">
+                        <div style="font-size: 9px; color: #64748b; letter-spacing: 1.5px;">ACTIVE OPERATIVE</div>
+                        <div class="player-name" id="display-name" style="margin: 0; font-size: 16px;">UNKNOWN</div>
+                    </div>
+                    <div style="text-align: left; border-left: 1px solid #374151; padding-left: 10px;">
+                        <div style="font-size: 9px; color: #64748b; letter-spacing: 1.5px;">HIGH SCORE</div>
+                        <div class="player-best" style="margin: 0; color: var(--neon-yellow); font-size: 14px;"><span id="display-highscore">0</span></div>
+                    </div>
+                    <button class="btn-micro" onclick="showProfileScreen()">SWITCH</button>
+                </div>
+                <div class="header-nav-actions">
+                    <button class="btn-header" onclick="showSettingsScreen(currentPrimaryMode)">⚙️ PROTOCOL CONFIG</button>
+                    <button class="btn-header" onclick="showLeaderboard()">🏆 RECORDS</button>
+                </div>
             </div>
 
-            <h1>SUMFALL</h1>
-            <p><strong>THE ACCUMULATOR PROTOCOL</strong></p>
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">v1.5.0 // SYSTEM UPDATE</p>
-            <p><strong>RULES OF ENGAGEMENT:</strong><br>
-                1. SMALL Numbers fall FAST.<br>
-                2. BIG Numbers fall SLOW.<br>
-                3. Wrong Input = <strong>-1 Heart</strong>.<br>
-                4. Floor Impact = <strong>-1 Heart</strong>.</p>
+            <div class="title-container">
+                <h1 style="margin: 0; font-size: 50px; letter-spacing: 4px;">SUMFALL</h1>
+                <div style="font-size: 11px; color: var(--neon-cyan); letter-spacing: 3px; margin-top: 4px; text-transform: uppercase;">
+                    Mental Math Training Matrix // Quantum Reactor Engine
+                </div>
+            </div>
 
-            <div style="display:flex; gap: 20px;">
-                <button class="btn" onclick="startGame()">INITIALIZE</button>
+            <!-- Mode Selection Console -->
+            <div class="mode-console-card">
+                <!-- Primary Protocol Selector -->
+                <div class="console-section">
+                    <div class="console-header-label">
+                        <span>[01] SELECT CORE PROTOCOL</span>
+                        <span class="active-badge" id="active-core-badge">FACTOR MATRIX</span>
+                    </div>
+                    <div class="protocol-button-grid">
+                        <button id="pmode-table" class="btn-mode active" onclick="setPrimaryMode('table')">FACTOR MATRIX</button>
+                        <button id="pmode-squares" class="btn-mode" onclick="setPrimaryMode('squares')">SQUARE MATRIX</button>
+                        <button id="pmode-cubes" class="btn-mode" onclick="setPrimaryMode('cubes')">CUBE MATRIX</button>
+                        <button id="pmode-accumulator" class="btn-mode" onclick="setPrimaryMode('accumulator')">ACCUMULATOR</button>
+                        <button id="pmode-multiplication" class="btn-mode" onclick="setPrimaryMode('multiplication')">MULTIPLICATION</button>
+                    </div>
+                </div>
+
+                <!-- Sub Protocol Selector -->
+                <div id="submode-wrapper" class="console-section">
+                    <div class="console-header-label">
+                        <span>[02] SELECT SUB-PROTOCOL</span>
+                    </div>
+                    <div id="submode-container" class="subprotocol-button-grid">
+                        <!-- Dynamically populated buttons -->
+                    </div>
+                </div>
+
+                <!-- Active Mode Telemetry Tagline -->
+                <div class="console-summary-box">
+                    <div id="mode-briefing" style="font-size: 13px; letter-spacing: 1.5px; text-align: center; color: #94a3b8;">
+                    </div>
+                </div>
+
+                <!-- Launch Action Bar -->
+                <div style="display:flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 4px;">
+                    <button class="btn" style="width: 100%; max-width: 380px; font-size: 22px; padding: 14px;" onclick="startGame()">INITIALIZE PROTOCOL</button>
+                    <button class="btn-link" onclick="showSettingsScreen(currentPrimaryMode)">⚙️ CONFIGURE CURRENT PROTOCOL (RANGES & SPEED)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victory-screen" class="hidden">
+            <div class="screen-card">
+                <h1 id="victory-title" style="color: var(--neon-green); margin-bottom: 6px;">PROTOCOL MASTERED!</h1>
+                <p id="victory-subtitle" style="color: var(--neon-yellow); font-size: 18px; margin-bottom: 6px;">OBJECTIVES CLEARED</p>
+                <p id="victory-desc" style="color: #94a3b8; font-size: 13px; margin-bottom: 20px; line-height: 1.4;">All Matrices Synchronized with Core Integrity Intact.</p>
+                
+                <div style="margin-bottom: 20px; background: #161f2e; padding: 16px 24px; border-radius: 6px; border: 1px solid var(--neon-cyan);">
+                    <div class="hud-label" style="text-align: center;">Mastery Score</div>
+                    <div class="stat-val" id="victory-score" style="text-align: center; color: var(--neon-cyan); font-size: 36px; margin-bottom: 10px;">0</div>
+                    <div class="hud-label" style="text-align: center;">Operator Status</div>
+                    <div class="stat-val" id="victory-rank" style="text-align: center; color: var(--neon-yellow); font-size: 18px;">QUANTUM MASTER</div>
+                </div>
+                
+                <div style="display:flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn" onclick="startGame()">RESTART PROTOCOL</button>
+                    <button class="btn-secondary" onclick="showStartScreen()">RETURN TO MAIN MENU</button>
+                    <button class="btn-secondary" onclick="showLeaderboard()">CLASSIFIED RECORDS</button>
+                </div>
             </div>
         </div>
 
         <!-- Game Over Screen -->
         <div id="game-over-screen" class="hidden">
-            <h1 style="color: var(--neon-pink)">SYSTEM FAILURE</h1>
-            <p>Integrity Critical. Shutdown Imminent.</p>
-            <div style="margin: 20px 0;">
-                <div class="hud-label" style="text-align: center;">Final Score</div>
-                <div class="stat-val" id="final-score" style="text-align: center;">0</div>
-                <div class="hud-label" style="text-align: center; margin-top:10px;">Personal Best</div>
-                <div class="stat-val" id="final-pb"
-                    style="text-align: center; color: var(--neon-yellow); font-size: 18px;">0</div>
+            <div class="screen-card">
+                <h1 style="color: var(--neon-pink); margin-bottom: 6px;">SYSTEM FAILURE</h1>
+                <p style="margin-bottom: 20px;">Reactor Buffer Overloaded. Integrity Compromised.</p>
+                
+                <div style="margin-bottom: 24px; background: rgba(17, 24, 39, 0.7); padding: 16px; border-radius: 6px; border: 1px solid #374151;">
+                    <div class="hud-label" style="text-align: center;">Final Simulation Score</div>
+                    <div class="stat-val" id="final-score" style="text-align: center; font-size: 36px; color: #fff; margin-bottom: 8px;">0</div>
+                    <div class="hud-label" style="text-align: center;">Personal Best</div>
+                    <div class="stat-val" id="final-pb" style="text-align: center; color: var(--neon-yellow); font-size: 20px;">0</div>
+                </div>
+                
+                <div style="display:flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn" onclick="startGame()">RETRY MISSION</button>
+                    <button class="btn-secondary" onclick="showStartScreen()">RETURN TO MAIN MENU</button>
+                    <button class="btn-secondary" onclick="showLeaderboard()">CLASSIFIED RECORDS</button>
+                </div>
             </div>
-            <button class="btn" onclick="showLeaderboard()">NEXT</button>
+        </div>
+
+        <!-- Protocol Settings Screen -->
+        <div id="settings-screen" class="hidden">
+            <div class="settings-modal-card">
+                <div class="settings-header">
+                    <div>
+                        <h2 style="margin: 0; color: var(--neon-cyan); font-size: 22px; letter-spacing: 2px;">PROTOCOL CONFIGURATION</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Set falling number ranges, wave sizes, and velocity multipliers for each mode.</p>
+                    </div>
+                    <button class="btn-close" onclick="closeSettingsScreen()">✕</button>
+                </div>
+
+                <!-- Settings Mode Tabs -->
+                <div class="settings-tabs-bar">
+                    <button id="settab-table" class="settings-tab-btn active" onclick="switchSettingsTab('table')">FACTOR MATRIX</button>
+                    <button id="settab-squares" class="settings-tab-btn" onclick="switchSettingsTab('squares')">SQUARE MATRIX</button>
+                    <button id="settab-cubes" class="settings-tab-btn" onclick="switchSettingsTab('cubes')">CUBE MATRIX</button>
+                    <button id="settab-accumulator" class="settings-tab-btn" onclick="switchSettingsTab('accumulator')">ACCUMULATOR</button>
+                    <button id="settab-multiplication" class="settings-tab-btn" onclick="switchSettingsTab('multiplication')">MULTIPLICATION</button>
+                    <button id="settab-audio" class="settings-tab-btn" onclick="switchSettingsTab('audio')">AUDIO & SYSTEM</button>
+                </div>
+
+                <!-- Settings Panels -->
+                <div class="settings-panel-container">
+                    <!-- 1. FACTOR MATRIX SETTINGS -->
+                    <div id="panel-table" class="settings-panel active">
+                        <div class="panel-section-title">FACTOR MATRIX PARAMETERS (TABLES & MULTIPLIERS)</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Starting Table (Min Table)</label>
+                                <span class="setting-desc">First table in sequential mode or minimum table in random shuffle.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="2" max="50" step="1" id="cfg-table-min" oninput="syncSettingVal('table-min', this.value)">
+                                <span class="setting-val-badge" id="val-table-min">12</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Ending Table (Max Table)</label>
+                                <span class="setting-desc">Final mastery table for sequential victory clearance.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="2" max="100" step="1" id="cfg-table-max" oninput="syncSettingVal('table-max', this.value)">
+                                <span class="setting-val-badge" id="val-table-max">30</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Multiplier Bounds</label>
+                                <span class="setting-desc">Min and max falling multipliers (e.g. 2× to 9×).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <span style="font-size: 11px; color:#64748b;">MIN:</span>
+                                <input type="number" min="1" max="15" id="cfg-table-mult-min" style="width: 50px;" onchange="syncSettingVal('table-mult-min', this.value)">
+                                <span style="font-size: 11px; color:#64748b;">MAX:</span>
+                                <input type="number" min="2" max="25" id="cfg-table-mult-max" style="width: 50px;" onchange="syncSettingVal('table-mult-max', this.value)">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Table Mode Speed Multiplier</label>
+                                <span class="setting-desc">Velocity multiplier specifically applied to Factor Matrix.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.4" max="3.0" step="0.1" id="cfg-table-speed" oninput="syncSettingVal('table-speed', this.value)">
+                                <span class="setting-val-badge" id="val-table-speed">1.0x</span>
+                            </div>
+                        </div>
+                        <div class="preset-row">
+                            <span class="preset-label">PRESETS:</span>
+                            <button class="preset-pill" onclick="applyPreset('table', 2, 9, 2, 9)">Tables 2–9</button>
+                            <button class="preset-pill" onclick="applyPreset('table', 12, 30, 2, 9)">Standard 12–30</button>
+                            <button class="preset-pill" onclick="applyPreset('table', 12, 50, 2, 9)">Extended 12–50</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. SQUARE MATRIX SETTINGS -->
+                    <div id="panel-squares" class="settings-panel">
+                        <div class="panel-section-title">SQUARE MATRIX PARAMETERS (N² & √N)</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Lower Base Number (Min Square)</label>
+                                <span class="setting-desc">Starting number to square (e.g. adjust from 2 to 11).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="1" max="100" step="1" id="cfg-sq-min" oninput="syncSettingVal('sq-min', this.value)">
+                                <span class="setting-val-badge" id="val-sq-min">2</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Max Base Number (Max Square)</label>
+                                <span class="setting-desc">Maximum number to square (e.g. adjust from 50 to 30).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="5" max="200" step="1" id="cfg-sq-max" oninput="syncSettingVal('sq-max', this.value)">
+                                <span class="setting-val-badge" id="val-sq-max">50</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Wave / Tier Size</label>
+                                <span class="setting-desc">Number of squares per vent wave in sequential mode.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="5" max="25" step="1" id="cfg-sq-tier" oninput="syncSettingVal('sq-tier', this.value)">
+                                <span class="setting-val-badge" id="val-sq-tier">10</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Square Speed Multiplier</label>
+                                <span class="setting-desc">Velocity multiplier specifically applied to Square Matrix.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.4" max="3.0" step="0.1" id="cfg-sq-speed" oninput="syncSettingVal('sq-speed', this.value)">
+                                <span class="setting-val-badge" id="val-sq-speed">1.0x</span>
+                            </div>
+                        </div>
+                        <div class="preset-row">
+                            <span class="preset-label">PRESETS:</span>
+                            <button class="preset-pill" onclick="applyPreset('squares', 11, 30, 10)">Custom Focus 11–30</button>
+                            <button class="preset-pill" onclick="applyPreset('squares', 2, 50, 10)">Standard 2–50</button>
+                            <button class="preset-pill" onclick="applyPreset('squares', 2, 25, 8)">Foundations 2–25</button>
+                            <button class="preset-pill" onclick="applyPreset('squares', 2, 100, 15)">Grandmaster 2–100</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. CUBE MATRIX SETTINGS -->
+                    <div id="panel-cubes" class="settings-panel">
+                        <div class="panel-section-title">CUBE MATRIX PARAMETERS (N³ & ∛N)</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Lower Base Number (Min Cube)</label>
+                                <span class="setting-desc">Starting number to cube (default: 2).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="1" max="40" step="1" id="cfg-cube-min" oninput="syncSettingVal('cube-min', this.value)">
+                                <span class="setting-val-badge" id="val-cube-min">2</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Max Base Number (Max Cube)</label>
+                                <span class="setting-desc">Maximum number to cube (default: 25).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="3" max="50" step="1" id="cfg-cube-max" oninput="syncSettingVal('cube-max', this.value)">
+                                <span class="setting-val-badge" id="val-cube-max">25</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Wave / Tier Size</label>
+                                <span class="setting-desc">Number of cubes per vent wave in sequential drills.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="4" max="15" step="1" id="cfg-cube-tier" oninput="syncSettingVal('cube-tier', this.value)">
+                                <span class="setting-val-badge" id="val-cube-tier">7</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Cube Speed Multiplier</label>
+                                <span class="setting-desc">Velocity multiplier specifically applied to Cube Matrix.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.4" max="3.0" step="0.1" id="cfg-cube-speed" oninput="syncSettingVal('cube-speed', this.value)">
+                                <span class="setting-val-badge" id="val-cube-speed">1.0x</span>
+                            </div>
+                        </div>
+                        <div class="preset-row">
+                            <span class="preset-label">PRESETS:</span>
+                            <button class="preset-pill" onclick="applyPreset('cubes', 2, 12, 6)">Core Basics 2–12</button>
+                            <button class="preset-pill" onclick="applyPreset('cubes', 2, 25, 7)">Standard 2–25</button>
+                            <button class="preset-pill" onclick="applyPreset('cubes', 2, 35, 10)">Extended 2–35</button>
+                        </div>
+                    </div>
+
+                    <!-- 4. ACCUMULATOR SETTINGS -->
+                    <div id="panel-accumulator" class="settings-panel">
+                        <div class="panel-section-title">ACCUMULATOR PROTOCOL PARAMETERS</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Reactor Vent Target</label>
+                                <span class="setting-desc">Target accumulation sum required to vent the reactor.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="20" max="250" step="10" id="cfg-acc-target" oninput="syncSettingVal('acc-target', this.value)">
+                                <span class="setting-val-badge" id="val-acc-target">50</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Master Speed Multiplier</label>
+                                <span class="setting-desc">Overall velocity multiplier. Modifies the speed of all numbers proportionally.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.4" max="3.0" step="0.1" id="cfg-acc-speed" oninput="syncSettingVal('acc-speed', this.value)">
+                                <span class="setting-val-badge" id="val-acc-speed">1.0x</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Category Speed Increment</label>
+                                <span class="setting-desc">Velocity delta between number categories (e.g., 20–29 faster than 11–19).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.01" max="0.15" step="0.01" id="cfg-acc-inc" oninput="syncSettingVal('acc-inc', this.value)">
+                                <span class="setting-val-badge" id="val-acc-inc">+0.04x</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Late Game Falling Range</label>
+                                <span class="setting-desc">Fallback range for stages past defined curated waves.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <span style="font-size: 11px; color:#64748b;">MIN:</span>
+                                <input type="number" min="1" max="25" id="cfg-acc-min" style="width: 50px;" onchange="syncSettingVal('acc-min', this.value)">
+                                <span style="font-size: 11px; color:#64748b;">MAX:</span>
+                                <input type="number" min="10" max="99" id="cfg-acc-max" style="width: 50px;" onchange="syncSettingVal('acc-max', this.value)">
+                            </div>
+                        </div>
+                        <div class="preset-row">
+                            <span class="preset-label">PRESETS:</span>
+                            <button class="preset-pill" onclick="applyPreset('acc', 50, 1.0, 0.04)">Standard Target 50</button>
+                            <button class="preset-pill" onclick="applyPreset('acc', 100, 1.2, 0.05)">Century Target 100</button>
+                            <button class="preset-pill" onclick="applyPreset('acc', 200, 1.5, 0.06)">High Velocity 200</button>
+                        </div>
+                    </div>
+
+                    <!-- 5. MULTIPLICATION MATRIX (TETRIS CASCADE) -->
+                    <div id="panel-multiplication" class="settings-panel">
+                        <div class="panel-section-title">MULTIPLICATION MATRIX (TETRIS CASCADE CONFIG)</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Factor Range</label>
+                                <span class="setting-desc">Minimum (default 11 for rigorous mental math) and maximum numbers on cubes.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <span style="font-size: 11px; color:#64748b;">MIN:</span>
+                                <input type="number" min="2" max="50" id="cfg-mult-min" style="width: 50px;" onchange="syncSettingVal('mult-min', this.value)">
+                                <span style="font-size: 11px; color:#64748b;">MAX:</span>
+                                <input type="number" min="11" max="99" id="cfg-mult-max" style="width: 50px;" onchange="syncSettingVal('mult-max', this.value)">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Bottom Grid Columns</label>
+                                <span class="setting-desc">Total lane columns across the bottom grid (standard: 10 columns).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="6" max="12" step="1" id="cfg-mult-cols" oninput="syncSettingVal('mult-cols', this.value)">
+                                <span class="setting-val-badge" id="val-mult-cols">10</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Starting Bottom Rows</label>
+                                <span class="setting-desc">Number of pre-placed bottom cube rows at game start (default: 2 rows).</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="1" max="4" step="1" id="cfg-mult-rows" oninput="syncSettingVal('mult-rows', this.value)">
+                                <span class="setting-val-badge" id="val-mult-rows">2</span>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Master Falling Speed Multiplier</label>
+                                <span class="setting-desc">Base velocity for falling blocks in multiplication cascade.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0.4" max="3.0" step="0.1" id="cfg-mult-speed" oninput="syncSettingVal('mult-speed', this.value)">
+                                <span class="setting-val-badge" id="val-mult-speed">1.0x</span>
+                            </div>
+                        </div>
+                        <div class="preset-row">
+                            <span class="preset-label">PRESETS:</span>
+                            <button class="preset-pill" onclick="applyPreset('multiplication', 11, 19, 10, 2, 1.0)">Mental Drill (11–19)</button>
+                            <button class="preset-pill" onclick="applyPreset('multiplication', 11, 25, 10, 2, 1.1)">Factor Blitz (11–25)</button>
+                            <button class="preset-pill" onclick="applyPreset('multiplication', 12, 35, 10, 2, 1.2)">Grandmaster (12–35)</button>
+                            <button class="preset-pill" onclick="applyPreset('multiplication', 11, 19, 10, 2, 1.4)">Speed Cascade (1.4x)</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. AUDIO & SYSTEM SETTINGS -->
+                    <div id="panel-audio" class="settings-panel">
+                        <div class="panel-section-title">AUDIO & INTERFACE CONFIGURATION</div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Synthesizer Sound Effects</label>
+                                <span class="setting-desc">Enable or mute quantum reactor audio telemetry.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <button id="cfg-audio-toggle" class="btn-micro" style="padding: 8px 16px; font-size: 13px;" onclick="toggleAudioSetting()">ENABLED</button>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label class="setting-title">Master Volume</label>
+                                <span class="setting-desc">Volume level of sound synthesis.</span>
+                            </div>
+                            <div class="setting-input-group">
+                                <input type="range" min="0" max="1" step="0.05" id="cfg-audio-vol" oninput="syncSettingVal('audio-vol', this.value)">
+                                <span class="setting-val-badge" id="val-audio-vol">80%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Footer Bar -->
+                <div class="settings-footer">
+                    <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-save" onclick="saveAndApplySettings()">SAVE & APPLY CONFIG</button>
+                        <button class="btn-secondary" onclick="closeSettingsScreen()">RETURN TO MAIN MENU</button>
+                    </div>
+                    <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-subtle" onclick="resetCurrentTabSettings()">RESET TAB</button>
+                        <button class="btn-subtle" style="color: #ef4444;" onclick="resetAllFactoryDefaults()">RESET ALL DEFAULTS</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Left Panel: Matrix -->
@@ -638,14 +1525,14 @@
                     </div>
                 </div>
 
-                <div class="hud-label" style="text-align: center;">Reactor Core</div>
+                <div class="hud-label" id="reactor-core-label" style="text-align: center;">Reactor Core</div>
                 <div id="reactor-display">
                     <span id="current-total">0</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between;">
-                    <div class="hud-label" style="text-align: center;">Capacity</div>
-                    <div class="hud-label" style="text-align: center; color: var(--neon-cyan)">Target: <span
+                    <div class="hud-label" id="capacity-label" style="text-align: center;">Capacity</div>
+                    <div class="hud-label" style="text-align: center; color: var(--neon-cyan)"><span id="target-label">Target:</span> <span
                             id="target-val">50</span></div>
                 </div>
                 <div class="vent-progress">
@@ -654,7 +1541,7 @@
             </div>
 
             <div id="input-container">
-                <div class="hud-label" style="text-align: center;">Manual Override Input</div>
+                <div class="hud-label" id="input-label" style="text-align: center;">Manual Override Input</div>
                 <input type="number" id="math-input" placeholder="Type Sum + Enter" autocomplete="off">
             </div>
 
@@ -663,8 +1550,8 @@
                     <div class="hud-label">Score</div>
                     <div class="stat-val" id="score-val">0</div>
                 </div>
-                <div class="stat-box">
-                    <div class="hud-label">Level</div>
+                <div class="stat-box" id="level-stat-box">
+                    <div class="hud-label" id="level-label">Level</div>
                     <div class="stat-val" id="level-val">1</div>
                 </div>
             </div>
@@ -858,27 +1745,555 @@
             }
         };
 
-        // --- GAME STATE ---
+        // --- GAME SETTINGS & STATE ---
+        const DEFAULT_SETTINGS = {
+            table: {
+                minTable: 12,
+                maxTable: 30,
+                minMultiplier: 2,
+                maxMultiplier: 9,
+                speedMultiplier: 1.0
+            },
+            squares: {
+                minBase: 2,
+                maxBase: 50,
+                tierSize: 10,
+                speedMultiplier: 1.0
+            },
+            cubes: {
+                minBase: 2,
+                maxBase: 25,
+                tierSize: 7,
+                speedMultiplier: 1.0
+            },
+            accumulator: {
+                minVal: 1,
+                maxVal: 99,
+                targetSum: 50,
+                speedMultiplier: 1.0,
+                speedIncrement: 0.04
+            },
+            multiplication: {
+                startMin: 11,
+                startMax: 19,
+                columns: 10,
+                startingRows: 2,
+                speedMultiplier: 1.0
+            },
+            audio: {
+                enabled: true,
+                volume: 0.8
+            }
+        };
+
+        let userSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        try {
+            const savedSettings = localStorage.getItem('sumfall_settings');
+            if (savedSettings) {
+                const parsed = JSON.parse(savedSettings);
+                userSettings = {
+                    table: { ...DEFAULT_SETTINGS.table, ...(parsed.table || {}) },
+                    squares: { ...DEFAULT_SETTINGS.squares, ...(parsed.squares || {}) },
+                    cubes: { ...DEFAULT_SETTINGS.cubes, ...(parsed.cubes || {}) },
+                    accumulator: { ...DEFAULT_SETTINGS.accumulator, ...(parsed.accumulator || {}) },
+                    multiplication: {
+                        ...DEFAULT_SETTINGS.multiplication,
+                        ...(parsed.multiplication || {}),
+                        startMin: (parsed.multiplication && parsed.multiplication.startMin && parsed.multiplication.startMin >= 11) ? parsed.multiplication.startMin : 11,
+                        startMax: (parsed.multiplication && parsed.multiplication.startMax && parsed.multiplication.startMax >= 15) ? parsed.multiplication.startMax : 19,
+                        columns: (parsed.multiplication && parsed.multiplication.columns) ? parsed.multiplication.columns : 10,
+                        startingRows: (parsed.multiplication && parsed.multiplication.startingRows) ? parsed.multiplication.startingRows : 2
+                    },
+                    audio: { ...DEFAULT_SETTINGS.audio, ...(parsed.audio || {}) }
+                };
+            }
+        } catch (e) {
+            console.error('Settings load error:', e);
+        }
+
+        const CUBE_NUMS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25];
+
+        const SUBMODES_MAP = {
+            'table': [
+                { id: 'table-seq', label: 'SEQUENTIAL DRILL' },
+                { id: 'table-rand', label: 'RANDOM SHUFFLE' }
+            ],
+            'squares': [
+                { id: 'squares-seq', label: 'SEQUENTIAL DRILL' },
+                { id: 'squares-rand', label: 'RANDOM SQUARES' },
+                { id: 'squares-rev', label: 'REVERSE ROOT (√x)' }
+            ],
+            'cubes': [
+                { id: 'cubes-seq', label: 'SEQUENTIAL DRILL' },
+                { id: 'cubes-rand', label: 'RANDOM CUBES' },
+                { id: 'cubes-rev', label: 'REVERSE ROOT (∛x)' }
+            ],
+            'accumulator': [
+                { id: 'accumulator', label: 'RUNNING SUM' }
+            ],
+            'multiplication': [
+                { id: 'mult-tetris', label: 'TETRIS CASCADE' }
+            ]
+        };
+
+        let currentPrimaryMode = 'table';
+        let currentSubMode = 'table-seq';
+        let currentMode = 'table-seq';
+
         let state = {
+            primaryMode: 'table',
+            subMode: 'table-seq',
+            mode: 'table-seq',
             isPlaying: false,
             isPaused: false,
             score: 0,
             level: 1,
+            tier: 1,
+            currentTable: 12,
+            allSeqMasterList: [],
+            seqRemaining: [2, 3, 4, 5, 6, 7, 8, 9],
+            tableProgress: 0,
+            tableTarget: 8,
+            totalInTier: 8,
             lifelines: 3,
             reactorTotal: 0,
             bankTarget: 50,
             blocks: [],
             particles: [],
+            placedGrid: [[], [], [], [], []],
             lastTime: 0,
             spawnTimer: 0,
-            spawnInterval: 2500,
+            spawnInterval: 1800,
             speedMultiplier: 1
         };
 
-        // Constants
-        const LANE_COUNT = 5;
+        // Lane Dimensions
+        function getLaneCount() {
+            if (state && (state.primaryMode === 'multiplication' || currentPrimaryMode === 'multiplication')) {
+                return (userSettings.multiplication && userSettings.multiplication.columns) ? userSettings.multiplication.columns : 10;
+            }
+            if (currentPrimaryMode === 'multiplication') {
+                return (userSettings.multiplication && userSettings.multiplication.columns) ? userSettings.multiplication.columns : 10;
+            }
+            return 5;
+        }
         let LANE_WIDTH = 0;
         const BLOCK_SIZE = 50;
+
+        // MODE SELECTION
+        function setPrimaryMode(primary) {
+            currentPrimaryMode = primary;
+
+            const modeTitles = {
+                'table': 'FACTOR MATRIX',
+                'squares': 'SQUARE MATRIX',
+                'cubes': 'CUBE MATRIX',
+                'accumulator': 'ACCUMULATOR',
+                'multiplication': 'MULTIPLICATION MATRIX'
+            };
+
+            const badge = document.getElementById('active-core-badge');
+            if (badge) badge.innerText = modeTitles[primary] || 'CORE PROTOCOL';
+
+            ['table', 'squares', 'cubes', 'accumulator', 'multiplication'].forEach(pm => {
+                const btn = document.getElementById(`pmode-${pm}`);
+                if (btn) {
+                    if (pm === primary) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+
+            const subContainer = document.getElementById('submode-container');
+            const subList = SUBMODES_MAP[primary] || [];
+
+            if (subContainer) {
+                subContainer.innerHTML = '';
+                subList.forEach(sub => {
+                    const b = document.createElement('button');
+                    b.id = `submode-${sub.id}`;
+                    b.className = 'btn-submode';
+                    b.innerText = sub.label;
+                    b.onclick = () => setSubMode(sub.id);
+                    subContainer.appendChild(b);
+                });
+            }
+
+            const subWrapper = document.getElementById('submode-wrapper');
+            if (subWrapper) {
+                subWrapper.style.display = (primary === 'accumulator' || primary === 'multiplication') ? 'none' : 'block';
+            }
+
+            const defaultSub = subList[0] ? subList[0].id : 'table-seq';
+            setSubMode(defaultSub);
+        }
+
+        function setSubMode(subId) {
+            currentSubMode = subId;
+            currentMode = subId;
+
+            const subList = SUBMODES_MAP[currentPrimaryMode] || [];
+            subList.forEach(sub => {
+                const b = document.getElementById(`submode-${sub.id}`);
+                if (b) {
+                    if (sub.id === subId) b.classList.add('active');
+                    else b.classList.remove('active');
+                }
+            });
+
+            const briefing = document.getElementById('mode-briefing');
+            if (!briefing) return;
+
+            const tCfg = userSettings.table;
+            const sCfg = userSettings.squares;
+            const cCfg = userSettings.cubes;
+            const aCfg = userSettings.accumulator;
+
+            const summaries = {
+                'table-seq': `<span style="color: var(--neon-green)">TABLES ${tCfg.minTable} → ${tCfg.maxTable}</span> &nbsp;•&nbsp; MULTIPLIERS ${tCfg.minMultiplier}× → ${tCfg.maxMultiplier}× &nbsp;•&nbsp; SPEED ${tCfg.speedMultiplier.toFixed(1)}x`,
+                'table-rand': `<span style="color: var(--neon-yellow)">RANDOM TABLES ${tCfg.minTable}–${tCfg.maxTable}</span> &nbsp;•&nbsp; MULTIPLIERS ${tCfg.minMultiplier}×–${tCfg.maxMultiplier}× &nbsp;•&nbsp; SPEED ${tCfg.speedMultiplier.toFixed(1)}x`,
+                'squares-seq': `<span style="color: var(--neon-cyan)">POWERS ${sCfg.minBase}² → ${sCfg.maxBase}²</span> &nbsp;•&nbsp; PROGRESSIVE (${sCfg.minBase * sCfg.minBase} TO ${sCfg.maxBase * sCfg.maxBase}) &nbsp;•&nbsp; SPEED ${sCfg.speedMultiplier.toFixed(1)}x`,
+                'squares-rand': `<span style="color: var(--neon-cyan)">RANDOM ${sCfg.minBase} TO ${sCfg.maxBase}</span> &nbsp;•&nbsp; INSTANT SQUARE RECALL &nbsp;•&nbsp; SPEED ${sCfg.speedMultiplier.toFixed(1)}x`,
+                'squares-rev': `<span style="color: var(--neon-pink)">REVERSE ROOT √X</span> &nbsp;•&nbsp; TYPE ROOT OF FALLING SQUARE (${sCfg.minBase} TO ${sCfg.maxBase}) &nbsp;•&nbsp; SPEED ${sCfg.speedMultiplier.toFixed(1)}x`,
+                'cubes-seq': `<span style="color: var(--neon-yellow)">CUBES ${cCfg.minBase}³ → ${cCfg.maxBase}³</span> &nbsp;•&nbsp; PROGRESSIVE (${cCfg.minBase ** 3} TO ${cCfg.maxBase ** 3}) &nbsp;•&nbsp; SPEED ${cCfg.speedMultiplier.toFixed(1)}x`,
+                'cubes-rand': `<span style="color: var(--neon-yellow)">RANDOM CUBES ${cCfg.minBase} TO ${cCfg.maxBase}</span> &nbsp;•&nbsp; CUBIC POWERS &nbsp;•&nbsp; SPEED ${cCfg.speedMultiplier.toFixed(1)}x`,
+                'cubes-rev': `<span style="color: var(--neon-pink)">REVERSE ROOT ∛X</span> &nbsp;•&nbsp; TYPE ROOT OF FALLING CUBE (${cCfg.minBase} TO ${cCfg.maxBase}) &nbsp;•&nbsp; SPEED ${cCfg.speedMultiplier.toFixed(1)}x`,
+                'accumulator': `<span style="color: var(--neon-cyan)">CURATED STAGES & DYNAMIC VELOCITY</span> &nbsp;•&nbsp; TARGET SUM: ${aCfg.targetSum} &nbsp;•&nbsp; BASE SPEED ${aCfg.speedMultiplier.toFixed(1)}x (+${(aCfg.speedIncrement || 0.04).toFixed(2)}x/CAT)`,
+                'mult-tetris': `<span style="color: var(--neon-cyan)">TETRIS CASCADE (A × B)</span> &nbsp;•&nbsp; MULTIPLY VERTICAL ADJACENT BLOCKS &nbsp;•&nbsp; SPEED ${(userSettings.multiplication ? userSettings.multiplication.speedMultiplier : 1.0).toFixed(1)}x &nbsp;•&nbsp; RANGE: ${(userSettings.multiplication && userSettings.multiplication.startMin) || 11}–${(userSettings.multiplication && userSettings.multiplication.startMax) || 19}`
+            };
+            briefing.innerHTML = summaries[subId] || '';
+        }
+
+        function setGameMode(mode) {
+            if (mode === 'table' || mode === 'table-seq') {
+                setPrimaryMode('table');
+                setSubMode('table-seq');
+            } else if (mode === 'table-random' || mode === 'table-rand') {
+                setPrimaryMode('table');
+                setSubMode('table-rand');
+            } else if (mode.startsWith('squares')) {
+                setPrimaryMode('squares');
+                setSubMode(mode);
+            } else if (mode.startsWith('cubes')) {
+                setPrimaryMode('cubes');
+                setSubMode(mode);
+            } else if (mode.startsWith('mult')) {
+                setPrimaryMode('multiplication');
+                setSubMode('mult-tetris');
+            } else {
+                setPrimaryMode('accumulator');
+                setSubMode('accumulator');
+            }
+        }
+
+        // --- SETTINGS CONTROLLER ---
+        let activeSettingsTab = 'table';
+
+        function showSettingsScreen(modeTab) {
+            if (modeTab && ['table', 'squares', 'cubes', 'accumulator', 'multiplication', 'audio'].includes(modeTab)) {
+                switchSettingsTab(modeTab);
+            } else {
+                switchSettingsTab(activeSettingsTab);
+            }
+            populateSettingsUI();
+            document.getElementById('settings-screen').classList.remove('hidden');
+        }
+
+        function closeSettingsScreen() {
+            document.getElementById('settings-screen').classList.add('hidden');
+            if (!state.isPlaying) {
+                showStartScreen();
+            } else if (state.isPaused) {
+                document.getElementById('pause-overlay').classList.remove('hidden');
+            }
+        }
+
+        function switchSettingsTab(tabName) {
+            activeSettingsTab = tabName;
+            ['table', 'squares', 'cubes', 'accumulator', 'multiplication', 'audio'].forEach(t => {
+                const tabBtn = document.getElementById(`settab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (tabBtn) {
+                    if (t === tabName) tabBtn.classList.add('active');
+                    else tabBtn.classList.remove('active');
+                }
+                if (panel) {
+                    if (t === tabName) panel.classList.add('active');
+                    else panel.classList.remove('active');
+                }
+            });
+        }
+
+        function populateSettingsUI() {
+            // Factor Matrix
+            setVal('cfg-table-min', userSettings.table.minTable);
+            setVal('cfg-table-max', userSettings.table.maxTable);
+            setVal('cfg-table-mult-min', userSettings.table.minMultiplier);
+            setVal('cfg-table-mult-max', userSettings.table.maxMultiplier);
+            setVal('cfg-table-speed', userSettings.table.speedMultiplier);
+            setText('val-table-min', userSettings.table.minTable);
+            setText('val-table-max', userSettings.table.maxTable);
+            setText('val-table-speed', `${userSettings.table.speedMultiplier.toFixed(1)}x`);
+
+            // Squares Matrix
+            setVal('cfg-sq-min', userSettings.squares.minBase);
+            setVal('cfg-sq-max', userSettings.squares.maxBase);
+            setVal('cfg-sq-tier', userSettings.squares.tierSize);
+            setVal('cfg-sq-speed', userSettings.squares.speedMultiplier);
+            setText('val-sq-min', userSettings.squares.minBase);
+            setText('val-sq-max', userSettings.squares.maxBase);
+            setText('val-sq-tier', userSettings.squares.tierSize);
+            setText('val-sq-speed', `${userSettings.squares.speedMultiplier.toFixed(1)}x`);
+
+            // Cubes Matrix
+            setVal('cfg-cube-min', userSettings.cubes.minBase);
+            setVal('cfg-cube-max', userSettings.cubes.maxBase);
+            setVal('cfg-cube-tier', userSettings.cubes.tierSize);
+            setVal('cfg-cube-speed', userSettings.cubes.speedMultiplier);
+            setText('val-cube-min', userSettings.cubes.minBase);
+            setText('val-cube-max', userSettings.cubes.maxBase);
+            setText('val-cube-tier', userSettings.cubes.tierSize);
+            setText('val-cube-speed', `${userSettings.cubes.speedMultiplier.toFixed(1)}x`);
+
+            // Accumulator
+            setVal('cfg-acc-min', userSettings.accumulator.minVal);
+            setVal('cfg-acc-max', userSettings.accumulator.maxVal);
+            setVal('cfg-acc-target', userSettings.accumulator.targetSum);
+            setVal('cfg-acc-speed', userSettings.accumulator.speedMultiplier);
+            setVal('cfg-acc-inc', userSettings.accumulator.speedIncrement || 0.04);
+            setText('val-acc-target', userSettings.accumulator.targetSum);
+            setText('val-acc-speed', `${userSettings.accumulator.speedMultiplier.toFixed(1)}x`);
+            setText('val-acc-inc', `+${(userSettings.accumulator.speedIncrement || 0.04).toFixed(2)}x`);
+
+            // Multiplication Matrix (Tetris Cascade)
+            setVal('cfg-mult-min', userSettings.multiplication.startMin || 11);
+            setVal('cfg-mult-max', userSettings.multiplication.startMax || 19);
+            setVal('cfg-mult-cols', userSettings.multiplication.columns || 10);
+            setVal('cfg-mult-rows', userSettings.multiplication.startingRows || 2);
+            setVal('cfg-mult-speed', userSettings.multiplication.speedMultiplier || 1.0);
+            setText('val-mult-cols', userSettings.multiplication.columns || 10);
+            setText('val-mult-rows', userSettings.multiplication.startingRows || 2);
+            setText('val-mult-speed', `${(userSettings.multiplication.speedMultiplier || 1.0).toFixed(1)}x`);
+
+            // Audio
+            setVal('cfg-audio-vol', userSettings.audio.volume);
+            setText('val-audio-vol', `${Math.round(userSettings.audio.volume * 100)}%`);
+            updateAudioToggleButton();
+        }
+
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        }
+
+        function setText(id, txt) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = txt;
+        }
+
+        function syncSettingVal(key, val) {
+            const num = parseFloat(val);
+            if (key === 'table-min') setText('val-table-min', val);
+            if (key === 'table-max') setText('val-table-max', val);
+            if (key === 'table-speed') setText('val-table-speed', `${num.toFixed(1)}x`);
+            if (key === 'sq-min') setText('val-sq-min', val);
+            if (key === 'sq-max') setText('val-sq-max', val);
+            if (key === 'sq-tier') setText('val-sq-tier', val);
+            if (key === 'sq-speed') setText('val-sq-speed', `${num.toFixed(1)}x`);
+            if (key === 'cube-min') setText('val-cube-min', val);
+            if (key === 'cube-max') setText('val-cube-max', val);
+            if (key === 'cube-tier') setText('val-cube-tier', val);
+            if (key === 'cube-speed') setText('val-cube-speed', `${num.toFixed(1)}x`);
+            if (key === 'acc-target') setText('val-acc-target', val);
+            if (key === 'acc-speed') setText('val-acc-speed', `${num.toFixed(1)}x`);
+            if (key === 'acc-inc') setText('val-acc-inc', `+${num.toFixed(2)}x`);
+            if (key === 'mult-cols') setText('val-mult-cols', val);
+            if (key === 'mult-rows') setText('val-mult-rows', val);
+            if (key === 'mult-speed') setText('val-mult-speed', `${num.toFixed(1)}x`);
+            if (key === 'audio-vol') setText('val-audio-vol', `${Math.round(num * 100)}%`);
+        }
+
+        function toggleAudioSetting() {
+            userSettings.audio.enabled = !userSettings.audio.enabled;
+            updateAudioToggleButton();
+        }
+
+        function updateAudioToggleButton() {
+            const btn = document.getElementById('cfg-audio-toggle');
+            if (btn) {
+                if (userSettings.audio.enabled) {
+                    btn.innerText = 'ENABLED';
+                    btn.style.color = 'var(--neon-green)';
+                    btn.style.borderColor = 'var(--neon-green)';
+                } else {
+                    btn.innerText = 'MUTED';
+                    btn.style.color = 'var(--neon-pink)';
+                    btn.style.borderColor = 'var(--neon-pink)';
+                }
+            }
+        }
+
+        function applyPreset(mode, a, b, c, d, e, f) {
+            if (mode === 'table') {
+                setVal('cfg-table-min', a);
+                setVal('cfg-table-max', b);
+                setVal('cfg-table-mult-min', c);
+                setVal('cfg-table-mult-max', d);
+                syncSettingVal('table-min', a);
+                syncSettingVal('table-max', b);
+            } else if (mode === 'squares') {
+                setVal('cfg-sq-min', a);
+                setVal('cfg-sq-max', b);
+                setVal('cfg-sq-tier', c);
+                syncSettingVal('sq-min', a);
+                syncSettingVal('sq-max', b);
+                syncSettingVal('sq-tier', c);
+            } else if (mode === 'cubes') {
+                setVal('cfg-cube-min', a);
+                setVal('cfg-cube-max', b);
+                setVal('cfg-cube-tier', c);
+                syncSettingVal('cube-min', a);
+                syncSettingVal('cube-max', b);
+                syncSettingVal('cube-tier', c);
+            } else if (mode === 'acc') {
+                setVal('cfg-acc-target', a);
+                setVal('cfg-acc-speed', b);
+                setVal('cfg-acc-inc', c);
+                syncSettingVal('acc-target', a);
+                syncSettingVal('acc-speed', b);
+                syncSettingVal('acc-inc', c);
+            } else if (mode === 'multiplication') {
+                setVal('cfg-mult-min', a);
+                setVal('cfg-mult-max', b);
+                setVal('cfg-mult-cols', c);
+                setVal('cfg-mult-rows', d);
+                setVal('cfg-mult-speed', e !== undefined ? e : 1.0);
+                syncSettingVal('mult-cols', c);
+                syncSettingVal('mult-rows', d);
+                syncSettingVal('mult-speed', e !== undefined ? e : 1.0);
+            }
+        }
+
+        function saveAndApplySettings() {
+            let tMin = parseInt(document.getElementById('cfg-table-min').value) || 12;
+            let tMax = parseInt(document.getElementById('cfg-table-max').value) || 30;
+            if (tMin > tMax) { const temp = tMin; tMin = tMax; tMax = temp; }
+            let mMin = parseInt(document.getElementById('cfg-table-mult-min').value) || 2;
+            let mMax = parseInt(document.getElementById('cfg-table-mult-max').value) || 9;
+            if (mMin > mMax) { const temp = mMin; mMin = mMax; mMax = temp; }
+            let tSpd = parseFloat(document.getElementById('cfg-table-speed').value) || 1.0;
+
+            userSettings.table = {
+                minTable: tMin,
+                maxTable: tMax,
+                minMultiplier: mMin,
+                maxMultiplier: mMax,
+                speedMultiplier: tSpd
+            };
+
+            let sMin = parseInt(document.getElementById('cfg-sq-min').value) || 2;
+            let sMax = parseInt(document.getElementById('cfg-sq-max').value) || 50;
+            if (sMin > sMax) { const temp = sMin; sMin = sMax; sMax = temp; }
+            let sTier = parseInt(document.getElementById('cfg-sq-tier').value) || 10;
+            let sSpd = parseFloat(document.getElementById('cfg-sq-speed').value) || 1.0;
+
+            userSettings.squares = {
+                minBase: sMin,
+                maxBase: sMax,
+                tierSize: sTier,
+                speedMultiplier: sSpd
+            };
+
+            let cMin = parseInt(document.getElementById('cfg-cube-min').value) || 2;
+            let cMax = parseInt(document.getElementById('cfg-cube-max').value) || 25;
+            if (cMin > cMax) { const temp = cMin; cMin = cMax; cMax = temp; }
+            let cTier = parseInt(document.getElementById('cfg-cube-tier').value) || 7;
+            let cSpd = parseFloat(document.getElementById('cfg-cube-speed').value) || 1.0;
+
+            userSettings.cubes = {
+                minBase: cMin,
+                maxBase: cMax,
+                tierSize: cTier,
+                speedMultiplier: cSpd
+            };
+
+            let aMin = parseInt(document.getElementById('cfg-acc-min').value) || 1;
+            let aMax = parseInt(document.getElementById('cfg-acc-max').value) || 99;
+            if (aMin > aMax) { const temp = aMin; aMin = aMax; aMax = temp; }
+            let aTgt = parseInt(document.getElementById('cfg-acc-target').value) || 50;
+            let aSpd = parseFloat(document.getElementById('cfg-acc-speed').value) || 1.0;
+            let aInc = parseFloat(document.getElementById('cfg-acc-inc').value);
+            if (isNaN(aInc)) aInc = 0.04;
+
+            userSettings.accumulator = {
+                minVal: aMin,
+                maxVal: aMax,
+                targetSum: aTgt,
+                speedMultiplier: aSpd,
+                speedIncrement: aInc
+            };
+
+            let multMin = parseInt(document.getElementById('cfg-mult-min').value) || 11;
+            let multMax = parseInt(document.getElementById('cfg-mult-max').value) || 19;
+            if (multMin > multMax) { const temp = multMin; multMin = multMax; multMax = temp; }
+            let multCols = parseInt(document.getElementById('cfg-mult-cols').value) || 10;
+            let multRows = parseInt(document.getElementById('cfg-mult-rows').value) || 2;
+            let multSpd = parseFloat(document.getElementById('cfg-mult-speed').value) || 1.0;
+
+            userSettings.multiplication = {
+                startMin: multMin,
+                startMax: multMax,
+                columns: multCols,
+                startingRows: multRows,
+                speedMultiplier: multSpd
+            };
+
+            let vol = parseFloat(document.getElementById('cfg-audio-vol').value);
+            if (isNaN(vol)) vol = 0.8;
+            userSettings.audio.volume = vol;
+
+            try {
+                localStorage.setItem('sumfall_settings', JSON.stringify(userSettings));
+            } catch (e) {
+                console.error('Settings save error:', e);
+            }
+
+            if (state.isPlaying) {
+                if (state.primaryMode === 'table') state.speedMultiplier = userSettings.table.speedMultiplier;
+                else if (state.primaryMode === 'squares') state.speedMultiplier = userSettings.squares.speedMultiplier;
+                else if (state.primaryMode === 'cubes') state.speedMultiplier = userSettings.cubes.speedMultiplier;
+                else if (state.primaryMode === 'accumulator') state.speedMultiplier = userSettings.accumulator.speedMultiplier;
+                else if (state.primaryMode === 'multiplication') state.speedMultiplier = userSettings.multiplication.speedMultiplier;
+            }
+
+            setSubMode(currentSubMode);
+            closeSettingsScreen();
+        }
+
+        function resetCurrentTabSettings() {
+            if (activeSettingsTab === 'table') {
+                userSettings.table = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.table));
+            } else if (activeSettingsTab === 'squares') {
+                userSettings.squares = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.squares));
+            } else if (activeSettingsTab === 'cubes') {
+                userSettings.cubes = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.cubes));
+            } else if (activeSettingsTab === 'accumulator') {
+                userSettings.accumulator = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.accumulator));
+            } else if (activeSettingsTab === 'multiplication') {
+                userSettings.multiplication = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.multiplication));
+            } else if (activeSettingsTab === 'audio') {
+                userSettings.audio = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.audio));
+            }
+            populateSettingsUI();
+        }
+
+        function resetAllFactoryDefaults() {
+            userSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+            try {
+                localStorage.removeItem('sumfall_settings');
+            } catch (e) {}
+            populateSettingsUI();
+            setSubMode(currentSubMode);
+        }
 
         // RANKS DEFINITION
         function getRankTitle(lvl) {
@@ -889,10 +2304,51 @@
             return "QUANTUM CORE";
         }
 
+        function getMultiplicationRankTitle(lvl) {
+            if (lvl <= 1) return "CASCADE INITIATE";
+            if (lvl === 2) return "FACTOR OPERATIVE";
+            if (lvl === 3) return "GRID COMPUTATIONIST";
+            if (lvl === 4) return "VECTOR MULTIPLIER";
+            if (lvl === 5) return "TETRIS MATRIX SPECIALIST";
+            if (lvl === 6) return "QUANTUM SYNTHESIZER";
+            if (lvl === 7) return "HYPER-SCALE ARITHMETICIAN";
+            return "GRAND CASCADE ARCHITECT";
+        }
+
+        function getMultiplicationRange() {
+            const sMin = (userSettings.multiplication && userSettings.multiplication.startMin) || 11;
+            const sMax = (userSettings.multiplication && userSettings.multiplication.startMax) || 19;
+            return { min: sMin, max: sMax };
+        }
+
+        function getTableRankTitle(table) {
+            if (table < 15) return "NOVICE OPERATIVE";
+            if (table < 18) return "MATRIX RECRUIT";
+            if (table < 22) return "FACTOR SPECIALIST";
+            if (table < 26) return "ARITHMETIC ENGINE";
+            if (table < 30) return "SILICON SAVANT";
+            return "QUANTUM MASTER";
+        }
+
+        function getSquareRankTitle(tier) {
+            if (tier <= 1) return "SQUARE INITIATE";
+            if (tier === 2) return "EXPONENT OPERATOR";
+            if (tier === 3) return "QUADRATIC ENGINE";
+            if (tier === 4) return "POWER ARCHITECT";
+            return "QUANTUM SQUARE MASTER";
+        }
+
+        function getCubeRankTitle(tier) {
+            if (tier <= 1) return "CUBE RECRUIT";
+            if (tier === 2) return "VOLUME SPECIALIST";
+            return "HYPERCUBE MASTER";
+        }
+
         // Audio Context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
+            if (!userSettings.audio.enabled) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -900,20 +2356,21 @@
             gain.connect(audioCtx.destination);
 
             const now = audioCtx.currentTime;
+            const masterVol = Math.max(0, Math.min(1, userSettings.audio.volume !== undefined ? userSettings.audio.volume : 0.8));
 
             if (type === 'hit') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(800, now);
                 osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gain.gain.setValueAtTime(0.1 * masterVol, now);
+                gain.gain.exponentialRampToValueAtTime(0.01 * masterVol, now + 0.1);
                 osc.start(now);
                 osc.stop(now + 0.1);
             } else if (type === 'vent') {
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(100, now);
                 osc.frequency.linearRampToValueAtTime(400, now + 0.5);
-                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.setValueAtTime(0.1 * masterVol, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.5);
                 osc.start(now);
                 osc.stop(now + 0.5);
@@ -921,7 +2378,7 @@
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(150, now);
                 osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.setValueAtTime(0.1 * masterVol, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
                 osc.start(now);
                 osc.stop(now + 0.2);
@@ -929,10 +2386,18 @@
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(400, now);
                 osc.frequency.linearRampToValueAtTime(800, now + 0.3);
-                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.setValueAtTime(0.1 * masterVol, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.3);
                 osc.start(now);
                 osc.stop(now + 0.3);
+            } else if (type === 'land') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+                gain.gain.setValueAtTime(0.15 * masterVol, now);
+                gain.gain.exponentialRampToValueAtTime(0.01 * masterVol, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
             }
         }
 
@@ -972,6 +2437,7 @@
         function showStartScreen() {
             hideAllScreens();
             profileSystem.updateUI();
+            setPrimaryMode(currentPrimaryMode);
             document.getElementById('start-screen').classList.remove('hidden');
         }
 
@@ -1017,16 +2483,55 @@
             }
         }
 
+        function abortToMainMenu() {
+            state.isPlaying = false;
+            state.isPaused = false;
+            state.blocks = [];
+            state.particles = [];
+            const laneCount = getLaneCount();
+            state.placedGrid = [];
+            for (let l = 0; l < laneCount; l++) state.placedGrid.push([]);
+            hideAllScreens();
+            showStartScreen();
+        }
+
         function hideAllScreens() {
-            const screens = ['start-screen', 'game-over-screen', 'level-screen', 'profile-screen', 'create-profile-screen', 'leaderboard-screen', 'welcome-screen', 'pause-overlay'];
-            screens.forEach(id => document.getElementById(id).classList.add('hidden'));
+            const screens = [
+                'start-screen',
+                'game-over-screen',
+                'level-screen',
+                'profile-screen',
+                'create-profile-screen',
+                'leaderboard-screen',
+                'welcome-screen',
+                'pause-overlay',
+                'victory-screen',
+                'settings-screen'
+            ];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
         }
 
         function resize() {
             const rect = document.getElementById('drop-zone').getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
-            LANE_WIDTH = canvas.width / LANE_COUNT;
+            const laneCount = getLaneCount();
+            LANE_WIDTH = canvas.width / laneCount;
+            if (state && state.placedGrid) {
+                const blockH = 42;
+                const spacingY = 44;
+                for (let l = 0; l < state.placedGrid.length; l++) {
+                    const col = state.placedGrid[l];
+                    if (!col) continue;
+                    for (let r = 0; r < col.length; r++) {
+                        col[r].x = (l * LANE_WIDTH) + (LANE_WIDTH / 2);
+                        col[r].y = canvas.height - (blockH / 2) - 4 - (r * spacingY);
+                    }
+                }
+            }
         }
 
         window.addEventListener('resize', resize);
@@ -1037,25 +2542,124 @@
             resize();
             hideAllScreens();
 
+            let initialTable = userSettings.table.minTable;
+            let target = 8;
+            let seq = [];
+            let allSeq = [];
+            let tier = 1;
+            let totalInTier = 8;
+            let modeSpeed = 1.0;
+
+            if (currentPrimaryMode === 'table') {
+                modeSpeed = userSettings.table.speedMultiplier;
+            } else if (currentPrimaryMode === 'squares') {
+                modeSpeed = userSettings.squares.speedMultiplier;
+            } else if (currentPrimaryMode === 'cubes') {
+                modeSpeed = userSettings.cubes.speedMultiplier;
+            } else if (currentPrimaryMode === 'accumulator') {
+                modeSpeed = userSettings.accumulator.speedMultiplier;
+            } else if (currentPrimaryMode === 'multiplication') {
+                modeSpeed = userSettings.multiplication.speedMultiplier;
+                target = 0;
+            }
+
+            if (currentSubMode === 'table-seq') {
+                initialTable = userSettings.table.minTable;
+                seq = [];
+                for (let m = userSettings.table.minMultiplier; m <= userSettings.table.maxMultiplier; m++) {
+                    seq.push(m);
+                }
+                target = seq.length;
+                totalInTier = seq.length;
+            } else if (currentSubMode === 'table-rand') {
+                const minT = userSettings.table.minTable;
+                const maxT = userSettings.table.maxTable;
+                initialTable = Math.floor(Math.random() * (maxT - minT + 1)) + minT;
+                target = 10;
+            } else if (currentSubMode === 'squares-seq') {
+                tier = 1;
+                allSeq = [];
+                for (let n = userSettings.squares.minBase; n <= userSettings.squares.maxBase; n++) {
+                    allSeq.push(n);
+                }
+                const tierSize = userSettings.squares.tierSize || 10;
+                seq = allSeq.slice(0, tierSize);
+                totalInTier = seq.length;
+                target = seq.length;
+            } else if (currentSubMode === 'squares-rand' || currentSubMode === 'squares-rev') {
+                target = 10;
+            } else if (currentSubMode === 'cubes-seq') {
+                tier = 1;
+                allSeq = [];
+                for (let n = userSettings.cubes.minBase; n <= userSettings.cubes.maxBase; n++) {
+                    allSeq.push(n);
+                }
+                const tierSize = userSettings.cubes.tierSize || 7;
+                seq = allSeq.slice(0, tierSize);
+                totalInTier = seq.length;
+                target = seq.length;
+            } else if (currentSubMode === 'cubes-rand' || currentSubMode === 'cubes-rev') {
+                target = 10;
+            }
+
+            const laneCount = getLaneCount();
+            let initialGrid = [];
+            for (let l = 0; l < laneCount; l++) {
+                initialGrid.push([]);
+            }
+
+            if (currentPrimaryMode === 'multiplication') {
+                const range = getMultiplicationRange();
+                const startingRows = (userSettings.multiplication && userSettings.multiplication.startingRows) || 2;
+                const blockH = 42;
+                const spacingY = 44;
+                for (let l = 0; l < laneCount; l++) {
+                    for (let r = 0; r < startingRows; r++) {
+                        const val = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                        const hue = (l * 36 + r * 28 + 160) % 360;
+                        initialGrid[l].push({
+                            lane: l,
+                            row: r,
+                            x: (l * LANE_WIDTH) + (LANE_WIDTH / 2),
+                            y: canvas.height - (blockH / 2) - 4 - (r * spacingY),
+                            value: val,
+                            color: `hsl(${hue}, 95%, 52%)`
+                        });
+                    }
+                }
+            }
+
             state = {
+                primaryMode: currentPrimaryMode,
+                subMode: currentSubMode,
+                mode: currentSubMode,
                 isPlaying: true,
                 isPaused: false,
                 score: 0,
                 level: 1,
+                tier: tier,
+                currentTable: initialTable,
+                allSeqMasterList: allSeq,
+                seqRemaining: [...seq],
+                tableProgress: 0,
+                tableTarget: target,
+                totalInTier: totalInTier,
                 lifelines: 3,
                 reactorTotal: 0,
-                bankTarget: 50,
+                bankTarget: userSettings.accumulator.targetSum || 50,
                 blocks: [],
                 particles: [],
+                placedGrid: initialGrid,
                 lastTime: performance.now(),
                 spawnTimer: 0,
-                spawnInterval: 2500,
-                speedMultiplier: 1
+                spawnInterval: 1800,
+                speedMultiplier: modeSpeed
             };
 
             updateUI();
             inputField.value = '';
             inputField.focus();
+            spawnBlock();
             requestAnimationFrame(gameLoop);
         }
 
@@ -1077,7 +2681,13 @@
             state.isPlaying = false;
             playSound('error');
 
-            profileSystem.saveGame(state.score, state.level);
+            let recordedLevel = state.level;
+            if (state.subMode === 'table-seq') recordedLevel = state.currentTable;
+            else if (state.subMode === 'squares-seq') recordedLevel = state.tier * 10;
+            else if (state.subMode === 'cubes-seq') recordedLevel = state.tier * 7;
+            else if (state.primaryMode === 'multiplication') recordedLevel = state.tableProgress;
+
+            profileSystem.saveGame(state.score, recordedLevel);
             profileSystem.updateUI();
 
             document.getElementById('game-over-screen').classList.remove('hidden');
@@ -1085,31 +2695,306 @@
         }
 
         function spawnBlock() {
-            const lane = Math.floor(Math.random() * LANE_COUNT);
+            const laneCount = getLaneCount();
 
-            let minVal = 1;
-            let maxVal = 9;
+            // MULTIPLICATION MATRIX (TETRIS CASCADE)
+            if (state.primaryMode === 'multiplication') {
+                if (state.blocks.length > 0) return;
 
-            if (state.level === 1) maxVal = 9;
-            else if (state.level === 2) maxVal = 9;
-            else if (state.level === 3) {
-                if (Math.random() < 0.7) maxVal = 9;
-                else { minVal = 10; maxVal = 15; }
-            } else if (state.level === 4) {
-                if (Math.random() < 0.5) maxVal = 9;
-                else { minVal = 10; maxVal = 20; }
-            } else if (state.level >= 5 && state.level < 10) {
-                maxVal = 50;
-            } else if (state.level >= 10) {
-                maxVal = 99;
+                const maxStack = Math.max(5, Math.floor((canvas.height - 40) / 44));
+                // Pick an available lane (with room under ceiling)
+                const availableLanes = [];
+                for (let l = 0; l < laneCount; l++) {
+                    const colLen = (state.placedGrid[l] || []).length;
+                    if (colLen < maxStack - 1) availableLanes.push(l);
+                }
+                const chosenLane = availableLanes.length > 0
+                    ? availableLanes[Math.floor(Math.random() * availableLanes.length)]
+                    : Math.floor(Math.random() * laneCount);
+
+                const mRange = getMultiplicationRange();
+                const val = Math.floor(Math.random() * (mRange.max - mRange.min + 1)) + mRange.min;
+                const baseMultSpeed = 62 * state.speedMultiplier * (canvas.height / 600);
+
+                state.blocks.push({
+                    x: (chosenLane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -40,
+                    value: val,
+                    lane: chosenLane,
+                    speed: baseMultSpeed,
+                    color: `hsl(${Math.random() * 60 + 175}, 100%, 55%)`
+                });
+                updateUI();
+                return;
             }
 
-            let val = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+            const lane = Math.floor(Math.random() * laneCount);
 
-            let baseLevelSpeed = 30 * state.speedMultiplier * (canvas.height / 600);
-            let tier = Math.ceil(val / 10); // 1-10 -> 1, 11-20 -> 2, etc.
-            let valMultiplier = 4 / tier;
-            let speed = baseLevelSpeed * valMultiplier;
+            // 1. FACTOR MATRIX - SEQUENTIAL
+            if (state.subMode === 'table-seq') {
+                if (state.blocks.length > 0) return;
+                if (state.seqRemaining.length === 0) return;
+
+                const m = state.seqRemaining.shift();
+                const product = state.currentTable * m;
+                const minT = userSettings.table.minTable;
+                const maxT = userSettings.table.maxTable;
+                const tableRatio = (state.currentTable - minT) / Math.max(1, (maxT - minT));
+                const baseTableSpeed = (88 + tableRatio * 46) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (150 + (state.currentTable - minT) * 11 + m * 24) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: product,
+                    displayNumber: m,
+                    multiplier: m,
+                    table: state.currentTable,
+                    lane: lane,
+                    speed: baseTableSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 2. FACTOR MATRIX - RANDOM SHUFFLE
+            if (state.subMode === 'table-rand') {
+                if (state.blocks.length > 0) return;
+
+                const minT = userSettings.table.minTable;
+                const maxT = userSettings.table.maxTable;
+                const minM = userSettings.table.minMultiplier;
+                const maxM = userSettings.table.maxMultiplier;
+                const t = Math.floor(Math.random() * (maxT - minT + 1)) + minT;
+                const m = Math.floor(Math.random() * (maxM - minM + 1)) + minM;
+                state.currentTable = t;
+                const product = t * m;
+                const baseSpeed = (92 + Math.min(10, state.level - 1) * 6) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (140 + (t - minT) * 11 + m * 25) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: product,
+                    displayNumber: m,
+                    multiplier: m,
+                    table: t,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 3. SQUARE MATRIX - SEQUENTIAL
+            if (state.subMode === 'squares-seq') {
+                if (state.blocks.length > 0) return;
+                if (state.seqRemaining.length === 0) return;
+
+                const n = state.seqRemaining.shift();
+                const sq = n * n;
+                const baseSpeed = (86 + (state.tier - 1) * 8) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (180 + n * 13) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: sq,
+                    displayNumber: n,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 4. SQUARE MATRIX - RANDOM
+            if (state.subMode === 'squares-rand') {
+                if (state.blocks.length > 0) return;
+
+                const sMin = userSettings.squares.minBase;
+                const sMax = userSettings.squares.maxBase;
+                const n = Math.floor(Math.random() * (sMax - sMin + 1)) + sMin;
+                const sq = n * n;
+                const baseSpeed = (90 + Math.min(8, state.level - 1) * 6) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (190 + n * 11) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: sq,
+                    displayNumber: n,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 5. SQUARE MATRIX - REVERSE ROOT (Falling square -> Type root)
+            if (state.subMode === 'squares-rev') {
+                if (state.blocks.length > 0) return;
+
+                const sMin = userSettings.squares.minBase;
+                const sMax = userSettings.squares.maxBase;
+                const n = Math.floor(Math.random() * (sMax - sMin + 1)) + sMin;
+                const sq = n * n;
+                const baseSpeed = (90 + Math.min(8, state.level - 1) * 6) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (280 + n * 11) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: n,
+                    displayNumber: sq,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 60%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 6. CUBE MATRIX - SEQUENTIAL
+            if (state.subMode === 'cubes-seq') {
+                if (state.blocks.length > 0) return;
+                if (state.seqRemaining.length === 0) return;
+
+                const n = state.seqRemaining.shift();
+                const cb = n * n * n;
+                const baseSpeed = (84 + (state.tier - 1) * 8) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (45 + n * 21) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: cb,
+                    displayNumber: n,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 7. CUBE MATRIX - RANDOM
+            if (state.subMode === 'cubes-rand') {
+                if (state.blocks.length > 0) return;
+
+                const cMin = userSettings.cubes.minBase;
+                const cMax = userSettings.cubes.maxBase;
+                const n = Math.floor(Math.random() * (cMax - cMin + 1)) + cMin;
+                const cb = n * n * n;
+                const baseSpeed = (88 + Math.min(8, state.level - 1) * 6) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (50 + n * 19) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: cb,
+                    displayNumber: n,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 55%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 8. CUBE MATRIX - REVERSE ROOT (Falling cube -> Type cube root)
+            if (state.subMode === 'cubes-rev') {
+                if (state.blocks.length > 0) return;
+
+                const cMin = userSettings.cubes.minBase;
+                const cMax = userSettings.cubes.maxBase;
+                const n = Math.floor(Math.random() * (cMax - cMin + 1)) + cMin;
+                const cb = n * n * n;
+                const baseSpeed = (88 + Math.min(8, state.level - 1) * 6) * state.speedMultiplier * (canvas.height / 600);
+                const hue = (310 + n * 19) % 360;
+
+                state.blocks.push({
+                    x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                    y: -50,
+                    value: n,
+                    displayNumber: cb,
+                    baseNum: n,
+                    lane: lane,
+                    speed: baseSpeed,
+                    color: `hsl(${hue}, 100%, 60%)`
+                });
+                updateUI();
+                return;
+            }
+
+            // 9. ACCUMULATOR PROTOCOL:
+            // Stage-based progression:
+            // Wave 1-2: Easy 1-digit numbers plus curated intro 2-digit numbers {7, 23, 17}
+            // Wave 3-5: Middle stages {48, 53} along with expanded 2-digit pairs
+            // Wave 6+: Harder 2-digit and 3-digit numbers, shifting into random calibrated range.
+            let val;
+            const currentLevel = state.level || 1;
+
+            if (currentLevel <= 2) {
+                // Easy stages: mix of 1-digit numbers (1-9) with primary curated numbers 7, 23, 17
+                const curatedEasy = [7, 23, 17, 3, 5, 8, 12, 16];
+                if (Math.random() < 0.6) {
+                    val = [7, 23, 17][Math.floor(Math.random() * 3)];
+                } else if (Math.random() < 0.7) {
+                    val = Math.floor(Math.random() * 8) + 2; // 2-9 (1-digit)
+                } else {
+                    val = curatedEasy[Math.floor(Math.random() * curatedEasy.length)];
+                }
+            } else if (currentLevel <= 5) {
+                // Middle stages: curated numbers 48, 53 plus diverse 2-digit sets
+                const curatedMid = [48, 53, 27, 34, 42, 59, 61];
+                if (Math.random() < 0.55) {
+                    val = [48, 53][Math.floor(Math.random() * 2)];
+                } else if (Math.random() < 0.6) {
+                    val = curatedMid[Math.floor(Math.random() * curatedMid.length)];
+                } else {
+                    val = Math.floor(Math.random() * 50) + 11; // 11-60
+                }
+            } else if (currentLevel <= 8) {
+                // Harder stages: high 2-digit numbers (45-99)
+                val = Math.floor(Math.random() * 55) + 45;
+            } else {
+                // Late game / random stages using calibrated user setting range
+                const aMin = userSettings.accumulator.minVal || 1;
+                const aMax = userSettings.accumulator.maxVal || 99;
+                val = Math.floor(Math.random() * (aMax - aMin + 1)) + aMin;
+            }
+
+            // Dynamic velocity calculation:
+            // 1. Overall base speed governed proportionally by state.speedMultiplier
+            // 2. Intra-category nuance: within a range, smaller numbers fall slightly faster than larger (e.g. 2,3 faster than 8,9)
+            // 3. Inter-category increment: 11-19 falls faster than 0-10, 20-29 faster than 11-19, etc.
+            // 4. Configurable speed increment (speedIncrement) scales all category deltas proportionally.
+            const userSpeedMult = state.speedMultiplier || 1.0;
+            const incStep = userSettings.accumulator.speedIncrement !== undefined ? userSettings.accumulator.speedIncrement : 0.04;
+            const baseVelocity = 52 * (canvas.height / 600);
+
+            // Category index: 0 for 0-10, 1 for 11-19, 2 for 20-29, 3 for 30-39, etc.
+            let catIndex = 0;
+            if (val >= 11 && val <= 19) catIndex = 1;
+            else if (val >= 20) catIndex = Math.min(8, Math.floor(val / 10));
+
+            // Intra-category subtle offset: smaller digits fall slightly faster (very subtle, e.g. ~0.005 to 0.012)
+            const intraMod = (val % 10);
+            const intraBonus = (9 - intraMod) * 0.003;
+
+            // Total speed factor applied to base velocity
+            const totalSpeedFactor = userSpeedMult * (1.0 + (catIndex * incStep) + intraBonus);
+            const speed = baseVelocity * totalSpeedFactor;
 
             state.blocks.push({
                 x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
@@ -1136,7 +3021,12 @@
             state.lifelines -= amount;
             if (state.lifelines < 0) state.lifelines = 0;
 
-            state.speedMultiplier = 1;
+            if (state.primaryMode === 'table') state.speedMultiplier = userSettings.table.speedMultiplier;
+            else if (state.primaryMode === 'squares') state.speedMultiplier = userSettings.squares.speedMultiplier;
+            else if (state.primaryMode === 'cubes') state.speedMultiplier = userSettings.cubes.speedMultiplier;
+            else if (state.primaryMode === 'accumulator') state.speedMultiplier = userSettings.accumulator.speedMultiplier;
+            else if (state.primaryMode === 'multiplication') state.speedMultiplier = userSettings.multiplication.speedMultiplier;
+            else state.speedMultiplier = 1;
 
             const container = document.getElementById('game-container');
             container.classList.add('flash-red');
@@ -1153,11 +3043,173 @@
             }
         }
 
+        function triggerTableVent() {
+            playSound('vent');
+            playSound('life-up');
+
+            if (state.lifelines < 5) state.lifelines++;
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-green');
+            setTimeout(() => container.classList.remove('flash-green'), 400);
+
+            state.tableProgress = 0;
+            const completedTable = state.currentTable;
+            state.currentTable++;
+            state.seqRemaining = [];
+            for (let m = userSettings.table.minMultiplier; m <= userSettings.table.maxMultiplier; m++) {
+                state.seqRemaining.push(m);
+            }
+            state.tableTarget = state.seqRemaining.length;
+            state.totalInTier = state.seqRemaining.length;
+            state.speedMultiplier += 0.04;
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+            state.isPlaying = false;
+
+            setTimeout(() => {
+                document.getElementById('level-screen-title').innerText = `TABLE ${completedTable} VENTED`;
+                document.getElementById('level-screen-subtitle').innerText = `Multipliers ${userSettings.table.minMultiplier} through ${userSettings.table.maxMultiplier} Mastered!`;
+                document.getElementById('next-level-label').innerText = `Entering Next Table`;
+                document.getElementById('next-level-val').innerText = `TABLE ${state.currentTable} OF ${userSettings.table.maxTable}`;
+                document.getElementById('rank-title').innerText = getTableRankTitle(state.currentTable);
+                document.getElementById('next-level-btn').innerText = `Initiate Table ${state.currentTable}`;
+                document.getElementById('level-screen').classList.remove('hidden');
+            }, 600);
+        }
+
+        function triggerSquareTierVent() {
+            playSound('vent');
+            playSound('life-up');
+
+            if (state.lifelines < 5) state.lifelines++;
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-green');
+            setTimeout(() => container.classList.remove('flash-green'), 400);
+
+            const completedTier = state.tier;
+            state.tier++;
+            state.tableProgress = 0;
+            state.speedMultiplier += 0.05;
+
+            const tierSize = userSettings.squares.tierSize || 10;
+            const startIdx = (state.tier - 1) * tierSize;
+            state.seqRemaining = state.allSeqMasterList.slice(startIdx, startIdx + tierSize);
+            state.tableTarget = state.seqRemaining.length;
+            state.totalInTier = state.seqRemaining.length;
+            const totalTiers = Math.ceil(state.allSeqMasterList.length / tierSize);
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+            state.isPlaying = false;
+
+            setTimeout(() => {
+                document.getElementById('level-screen-title').innerText = `SQUARE TIER ${completedTier} VENTED`;
+                document.getElementById('level-screen-subtitle').innerText = `Tier ${completedTier} Squares Mastered. Buffer Cooled.`;
+                document.getElementById('next-level-label').innerText = `Entering Next Tier`;
+                document.getElementById('next-level-val').innerText = `TIER ${state.tier} OF ${totalTiers}`;
+                document.getElementById('rank-title').innerText = getSquareRankTitle(state.tier);
+                document.getElementById('next-level-btn').innerText = `Initiate Tier ${state.tier}`;
+                document.getElementById('level-screen').classList.remove('hidden');
+            }, 600);
+        }
+
+        function triggerCubeTierVent() {
+            playSound('vent');
+            playSound('life-up');
+
+            if (state.lifelines < 5) state.lifelines++;
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-green');
+            setTimeout(() => container.classList.remove('flash-green'), 400);
+
+            const completedTier = state.tier;
+            state.tier++;
+            state.tableProgress = 0;
+            state.speedMultiplier += 0.06;
+
+            const tierSize = userSettings.cubes.tierSize || 7;
+            const startIdx = (state.tier - 1) * tierSize;
+            state.seqRemaining = state.allSeqMasterList.slice(startIdx, startIdx + tierSize);
+            state.tableTarget = state.seqRemaining.length;
+            state.totalInTier = state.seqRemaining.length;
+            const totalTiers = Math.ceil(state.allSeqMasterList.length / tierSize);
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+            state.isPlaying = false;
+
+            setTimeout(() => {
+                document.getElementById('level-screen-title').innerText = `CUBE TIER ${completedTier} VENTED`;
+                document.getElementById('level-screen-subtitle').innerText = `Tier ${completedTier} Cubes Mastered. Buffer Cooled.`;
+                document.getElementById('next-level-label').innerText = `Entering Next Tier`;
+                document.getElementById('next-level-val').innerText = `TIER ${state.tier} OF ${totalTiers}`;
+                document.getElementById('rank-title').innerText = getCubeRankTitle(state.tier);
+                document.getElementById('next-level-btn').innerText = `Initiate Tier ${state.tier}`;
+                document.getElementById('level-screen').classList.remove('hidden');
+            }, 600);
+        }
+
+        function triggerBlitzVent() {
+            playSound('vent');
+            playSound('life-up');
+
+            if (state.lifelines < 5) state.lifelines++;
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-green');
+            setTimeout(() => container.classList.remove('flash-green'), 400);
+
+            state.tableProgress = 0;
+            const completedWave = state.level;
+            state.level++;
+            state.speedMultiplier += 0.08;
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+            state.isPlaying = false;
+
+            setTimeout(() => {
+                document.getElementById('level-screen-title').innerText = `BLITZ WAVE ${completedWave} VENTED`;
+                document.getElementById('level-screen-subtitle').innerText = `10 Random Challenges Cleared. Lifeline Awarded.`;
+                document.getElementById('next-level-label').innerText = `Entering Next Wave`;
+                document.getElementById('next-level-val').innerText = `WAVE ${state.level}`;
+                let rank = "QUANTUM OPERATOR";
+                if (state.primaryMode === 'table') rank = getTableRankTitle(12 + Math.min(18, state.level * 2));
+                else if (state.primaryMode === 'squares') rank = getSquareRankTitle(Math.min(5, Math.ceil(state.level / 2)));
+                else if (state.primaryMode === 'cubes') rank = getCubeRankTitle(Math.min(3, Math.ceil(state.level / 2)));
+                document.getElementById('rank-title').innerText = rank;
+                document.getElementById('next-level-btn').innerText = `Initiate Wave ${state.level}`;
+                document.getElementById('level-screen').classList.remove('hidden');
+            }, 600);
+        }
+
+        function triggerVictory(title, subtitle, desc) {
+            state.isPlaying = false;
+            playSound('vent');
+            playSound('life-up');
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+
+            profileSystem.saveGame(state.score, 30);
+            profileSystem.updateUI();
+
+            const titleEl = document.getElementById('victory-title');
+            if (titleEl) titleEl.innerText = title || 'PROTOCOL MASTERED!';
+            const subEl = document.getElementById('victory-subtitle');
+            if (subEl) subEl.innerText = subtitle || 'OBJECTIVES CLEARED';
+            const descEl = document.getElementById('victory-desc');
+            if (descEl) descEl.innerText = desc || 'All Matrices Synchronized with Core Integrity Intact.';
+
+            document.getElementById('victory-score').innerText = state.score;
+            document.getElementById('victory-screen').classList.remove('hidden');
+        }
+
         function triggerVent() {
             playSound('vent');
             playSound('life-up');
 
-            state.lifelines++;
+            if (state.lifelines < 5) state.lifelines++;
             const container = document.getElementById('game-container');
             container.classList.add('flash-green');
             setTimeout(() => container.classList.remove('flash-green'), 400);
@@ -1165,9 +3217,10 @@
             state.score += state.reactorTotal;
             state.reactorTotal = 0;
             state.level++;
-            state.speedMultiplier += 0.4;
-            state.spawnInterval = Math.max(800, 2500 - (state.level * 150));
-            state.bankTarget = Math.floor(state.bankTarget * 1.5);
+            const accSpeedInc = (userSettings.accumulator.speedIncrement || 0.04);
+            state.speedMultiplier += accSpeedInc * 1.5;
+            state.spawnInterval = Math.max(850, 2400 - (state.level * 120));
+            state.bankTarget = Math.floor(state.bankTarget * 1.4);
 
             state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
             state.blocks = [];
@@ -1175,8 +3228,12 @@
             state.isPlaying = false;
 
             setTimeout(() => {
+                document.getElementById('level-screen-title').innerText = `SYSTEM VENTED`;
+                document.getElementById('level-screen-subtitle').innerText = `Reactor Cooled. Buffer Cleared.`;
+                document.getElementById('next-level-label').innerText = `Entering Level`;
                 document.getElementById('next-level-val').innerText = state.level;
                 document.getElementById('rank-title').innerText = getRankTitle(state.level);
+                document.getElementById('next-level-btn').innerText = `Initiate Next Wave`;
                 document.getElementById('level-screen').classList.remove('hidden');
             }, 600);
         }
@@ -1187,6 +3244,36 @@
             state.isPlaying = true;
             inputField.value = '';
             inputField.focus();
+
+            if (state.primaryMode === 'multiplication') {
+                const laneCount = getLaneCount();
+                const startingRows = (userSettings.multiplication && userSettings.multiplication.startingRows) || 2;
+                const range = getMultiplicationRange();
+                const blockH = 42;
+                const spacingY = 44;
+
+                state.placedGrid = [];
+                for (let l = 0; l < laneCount; l++) {
+                    state.placedGrid.push([]);
+                    for (let r = 0; r < startingRows; r++) {
+                        const val = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                        const hue = (l * 36 + r * 28 + 160) % 360;
+                        state.placedGrid[l].push({
+                            lane: l,
+                            row: r,
+                            x: (l * LANE_WIDTH) + (LANE_WIDTH / 2),
+                            y: canvas.height - (blockH / 2) - 4 - (r * spacingY),
+                            value: val,
+                            color: `hsl(${hue}, 95%, 52%)`
+                        });
+                    }
+                }
+            }
+
+            updateUI();
+            if (state.subMode !== 'accumulator' || state.blocks.length === 0) {
+                spawnBlock();
+            }
             requestAnimationFrame(gameLoop);
         }
 
@@ -1199,18 +3286,90 @@
             state.spawnTimer += dt * 1000;
 
             if (state.blocks.length === 0) {
-                spawnBlock();
+                if (state.subMode === 'table-seq' || state.subMode === 'squares-seq' || state.subMode === 'cubes-seq') {
+                    if (state.seqRemaining.length > 0) {
+                        spawnBlock();
+                    }
+                } else if (state.subMode !== 'accumulator') {
+                    spawnBlock();
+                } else {
+                    spawnBlock();
+                }
                 state.spawnTimer = 0;
             }
+
+            const laneCount = getLaneCount();
+            const blockH = 42;
+            const blockW = Math.min(46, LANE_WIDTH - 4);
+            const halfW = blockW / 2;
+            const spacingY = 44;
 
             for (let i = state.blocks.length - 1; i >= 0; i--) {
                 let b = state.blocks[i];
                 b.y += b.speed * dt;
 
-                if (b.y > canvas.height) {
-                    state.blocks.splice(i, 1);
-                    playSound('error');
-                    loseLife(1);
+                if (state.primaryMode === 'multiplication') {
+                    const col = state.placedGrid[b.lane] || [];
+                    const topCube = col.length > 0 ? col[col.length - 1] : null;
+                    const landingY = topCube ? (topCube.y - spacingY) : (canvas.height - (blockH / 2) - 4);
+
+                    if (b.y >= landingY) {
+                        b.y = landingY;
+                        state.blocks.splice(i, 1);
+                        playSound('land');
+
+                        // Push onto column stack
+                        col.push({
+                            lane: b.lane,
+                            row: col.length,
+                            x: (b.lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                            y: landingY,
+                            value: b.value,
+                            color: b.color
+                        });
+
+                        const container = document.getElementById('game-container');
+                        container.classList.add('shake');
+                        setTimeout(() => container.classList.remove('shake'), 150);
+
+                        // If column stacks too high (near the top ceiling), penalty
+                        const maxStack = Math.max(5, Math.floor((canvas.height - 40) / spacingY));
+                        if (col.length >= maxStack) {
+                            playSound('error');
+                            loseLife(1);
+                            const p1 = col.pop();
+                            if (p1) createExplosion(p1.x, p1.y, '#ff0055');
+                            const p2 = col.pop();
+                            if (p2) createExplosion(p2.x, p2.y, '#ff0055');
+                        }
+
+                        if (state.isPlaying && state.lifelines > 0) {
+                            spawnBlock();
+                        }
+                        continue;
+                    }
+                } else {
+                    if (b.y > canvas.height) {
+                        state.blocks.splice(i, 1);
+                        playSound('error');
+                        loseLife(1);
+
+                        if (state.isPlaying && state.lifelines > 0) {
+                            if (state.subMode === 'table-seq') {
+                                if (!state.seqRemaining.includes(b.multiplier)) {
+                                    state.seqRemaining.push(b.multiplier);
+                                }
+                                spawnBlock();
+                            } else if (state.subMode === 'squares-seq' || state.subMode === 'cubes-seq') {
+                                if (!state.seqRemaining.includes(b.baseNum)) {
+                                    state.seqRemaining.push(b.baseNum);
+                                }
+                                spawnBlock();
+                            } else if (state.subMode !== 'accumulator') {
+                                spawnBlock();
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1224,27 +3383,59 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Draw clean vertical grid lines across all lanes
             ctx.strokeStyle = '#1a1e24';
             ctx.lineWidth = 1;
-            for (let i = 1; i < LANE_COUNT; i++) {
+            for (let i = 1; i < laneCount; i++) {
                 ctx.beginPath();
                 ctx.moveTo(i * LANE_WIDTH, 0);
                 ctx.lineTo(i * LANE_WIDTH, canvas.height);
                 ctx.stroke();
             }
 
-            ctx.font = 'bold 24px Share Tech Mono';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
+            // In multiplication mode, render placed cubes with identical neon block styling
+            if (state.primaryMode === 'multiplication') {
+                for (let l = 0; l < laneCount; l++) {
+                    const col = state.placedGrid[l] || [];
+                    for (let r = 0; r < col.length; r++) {
+                        const c = col[r];
+                        const textStr = String(c.value);
+                        const textLen = textStr.length;
+                        const drawX = (l * LANE_WIDTH) + (LANE_WIDTH / 2);
+
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = c.color;
+                        ctx.fillStyle = c.color;
+                        ctx.fillRect(drawX - halfW, c.y - blockH / 2, blockW, blockH);
+
+                        ctx.fillStyle = '#000000';
+                        ctx.shadowBlur = 0;
+                        const fontSize = textLen >= 4 ? 14 : (textLen >= 3 ? 16 : 20);
+                        ctx.font = `bold ${fontSize}px Share Tech Mono`;
+                        ctx.fillText(textStr, drawX, c.y);
+                    }
+                }
+            }
+
+            // Render falling blocks with identical neon block styling across all modes
             state.blocks.forEach(b => {
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = b.color;
                 ctx.fillStyle = b.color;
-                ctx.fillRect(b.x - 20, b.y - 20, 40, 40);
-                ctx.fillStyle = '#000';
+
+                const textStr = String(b.displayNumber !== undefined ? b.displayNumber : b.value);
+                const textLen = textStr.length;
+                const drawX = Math.max(halfW + 2, Math.min(canvas.width - halfW - 2, b.x));
+
+                ctx.fillRect(drawX - halfW, b.y - blockH / 2, blockW, blockH);
+                ctx.fillStyle = '#000000';
                 ctx.shadowBlur = 0;
-                ctx.fillText(b.value, b.x, b.y);
+                const fontSize = textLen >= 4 ? 14 : (textLen >= 3 ? 16 : 20);
+                ctx.font = `bold ${fontSize}px Share Tech Mono`;
+                ctx.fillText(textStr, drawX, b.y);
             });
 
             state.particles.forEach(p => {
@@ -1261,30 +3452,267 @@
         }
 
         function updateUI() {
-            document.getElementById('current-total').innerText = state.reactorTotal;
-            document.getElementById('target-val').innerText = state.bankTarget;
-            document.getElementById('score-val').innerText = state.score;
-            document.getElementById('level-val').innerText = state.level;
+            const coreLabel = document.getElementById('reactor-core-label');
+            const totalEl = document.getElementById('current-total');
+            const capLabel = document.getElementById('capacity-label');
+            const targetLabel = document.getElementById('target-label');
+            const targetVal = document.getElementById('target-val');
+            const inputLabel = document.getElementById('input-label');
+            const levelLabel = document.getElementById('level-label');
+            const levelVal = document.getElementById('level-val');
+            const bar = document.getElementById('vent-bar');
 
-            const lifeContainer = document.getElementById('lifeline-display');
-            lifeContainer.innerHTML = '';
-
-            for (let i = 0; i < 5; i++) {
-                const heart = document.createElement('span');
-                heart.className = 'heart';
-                heart.innerHTML = '♥';
-
-                if (i < state.lifelines) {
-                    heart.classList.add('active');
+            if (state.subMode === 'table-seq') {
+                if (coreLabel) coreLabel.innerText = 'CONSTANT TABLE';
+                if (totalEl) {
+                    totalEl.innerText = state.currentTable;
+                    totalEl.style.color = 'var(--neon-green)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-green), 0 0 20px var(--neon-green)';
                 }
-                lifeContainer.appendChild(heart);
+                if (capLabel) capLabel.innerText = 'PROGRESS (2→9)';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = `Calculate: ${state.currentTable} × [Falling Number]`;
+                inputField.placeholder = `Type ${state.currentTable} × [Falling #] + Enter`;
+                if (levelLabel) levelLabel.innerText = 'Table';
+                if (levelVal) levelVal.innerText = `${state.currentTable} / ${userSettings.table.maxTable}`;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-green)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'table-rand') {
+                if (coreLabel) coreLabel.innerText = 'SHUFFLE FOCUS';
+                if (totalEl) {
+                    totalEl.innerText = state.currentTable;
+                    totalEl.style.color = 'var(--neon-yellow)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow)';
+                }
+                if (capLabel) capLabel.innerText = 'BLITZ STREAK';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = `Calculate: ${state.currentTable} × [Falling Number]`;
+                inputField.placeholder = `Type ${state.currentTable} × [Falling #] + Enter`;
+                if (levelLabel) levelLabel.innerText = 'Blitz Wave';
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-yellow)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'squares-seq') {
+                if (coreLabel) coreLabel.innerText = 'SQUARE POWER';
+                if (totalEl) {
+                    totalEl.innerText = 'X²';
+                    totalEl.style.color = 'var(--neon-cyan)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan)';
+                }
+                if (capLabel) capLabel.innerText = 'TIER PROGRESS';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = 'Calculate: [Falling Number]²';
+                inputField.placeholder = 'Type Square (e.g. 12² = 144) + Enter';
+                const totalTiers = Math.ceil((state.allSeqMasterList.length || 49) / (userSettings.squares.tierSize || 10));
+                if (levelLabel) levelLabel.innerText = 'Tier';
+                if (levelVal) levelVal.innerText = `${state.tier} / ${totalTiers}`;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-green)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'squares-rand') {
+                if (coreLabel) coreLabel.innerText = 'RANDOM SQUARES';
+                if (totalEl) {
+                    totalEl.innerText = 'X²';
+                    totalEl.style.color = 'var(--neon-cyan)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan)';
+                }
+                if (capLabel) capLabel.innerText = 'BLITZ STREAK';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = `Calculate: [Falling #]² (${userSettings.squares.minBase} to ${userSettings.squares.maxBase})`;
+                inputField.placeholder = 'Type N² + Enter';
+                if (levelLabel) levelLabel.innerText = 'Blitz Wave';
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-yellow)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'squares-rev') {
+                if (coreLabel) coreLabel.innerText = 'ROOT EXTRACTION';
+                if (totalEl) {
+                    totalEl.innerText = '√X';
+                    totalEl.style.color = 'var(--neon-pink)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink)';
+                }
+                if (capLabel) capLabel.innerText = 'ROOT STREAK';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = 'Extract: √[Falling Square]';
+                inputField.placeholder = 'Type Square Root (e.g. √144 = 12, √900 = 30) + Enter';
+                if (levelLabel) levelLabel.innerText = 'Blitz Wave';
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-pink)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'cubes-seq') {
+                if (coreLabel) coreLabel.innerText = 'CUBE POWER';
+                if (totalEl) {
+                    totalEl.innerText = 'X³';
+                    totalEl.style.color = 'var(--neon-yellow)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow)';
+                }
+                if (capLabel) capLabel.innerText = 'TIER PROGRESS';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = 'Calculate: [Falling Number]³';
+                inputField.placeholder = 'Type Cube (e.g. 7³ = 343, 25³ = 15625) + Enter';
+                const totalTiers = Math.ceil((state.allSeqMasterList.length || 21) / (userSettings.cubes.tierSize || 7));
+                if (levelLabel) levelLabel.innerText = 'Tier';
+                if (levelVal) levelVal.innerText = `${state.tier} / ${totalTiers}`;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-green)' : 'var(--neon-yellow)';
+                }
+            } else if (state.subMode === 'cubes-rand') {
+                if (coreLabel) coreLabel.innerText = 'RANDOM CUBES';
+                if (totalEl) {
+                    totalEl.innerText = 'X³';
+                    totalEl.style.color = 'var(--neon-yellow)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow)';
+                }
+                if (capLabel) capLabel.innerText = 'BLITZ STREAK';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = `Calculate: [Falling #]³ (${userSettings.cubes.minBase} to ${userSettings.cubes.maxBase})`;
+                inputField.placeholder = 'Type N³ + Enter';
+                if (levelLabel) levelLabel.innerText = 'Blitz Wave';
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-yellow)' : 'var(--neon-cyan)';
+                }
+            } else if (state.subMode === 'cubes-rev') {
+                if (coreLabel) coreLabel.innerText = 'CUBE ROOT EXTRACTION';
+                if (totalEl) {
+                    totalEl.innerText = '∛X';
+                    totalEl.style.color = 'var(--neon-pink)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink)';
+                }
+                if (capLabel) capLabel.innerText = 'ROOT STREAK';
+                if (targetLabel) targetLabel.innerText = 'Vent:';
+                if (targetVal) targetVal.innerText = `${state.tableProgress} / ${state.tableTarget}`;
+                if (inputLabel) inputLabel.innerText = 'Extract: ∛[Falling Cube]';
+                inputField.placeholder = 'Type Cube Root (e.g. ∛343 = 7, ∛1728 = 12) + Enter';
+                if (levelLabel) levelLabel.innerText = 'Blitz Wave';
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.tableProgress / state.tableTarget) * 100);
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    bar.style.backgroundColor = pct >= 80 ? 'var(--neon-pink)' : 'var(--neon-cyan)';
+                }
+            } else if (state.primaryMode === 'multiplication') {
+                if (coreLabel) coreLabel.innerText = 'CASCADE MULTIPLIER';
+                let eqText = 'A × B';
+                if (state.blocks.length > 0) {
+                    const activeB = state.blocks[0];
+                    const col = state.placedGrid[activeB.lane] || [];
+                    const topCube = col.length > 0 ? col[col.length - 1] : null;
+                    if (topCube) {
+                        eqText = `${activeB.value} × ${topCube.value}`;
+                    }
+                }
+                if (totalEl) {
+                    totalEl.innerText = eqText;
+                    totalEl.style.color = 'var(--neon-cyan)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan)';
+                }
+
+                // Grid Stack Density Monitoring (No Wave Level)
+                let maxColLen = 0;
+                const laneCount = getLaneCount();
+                for (let l = 0; l < laneCount; l++) {
+                    const len = (state.placedGrid[l] || []).length;
+                    if (len > maxColLen) maxColLen = len;
+                }
+                const maxAllowed = Math.max(5, Math.floor((canvas.height - 40) / 44));
+                const loadPct = Math.min(100, Math.round((maxColLen / maxAllowed) * 100));
+
+                if (capLabel) capLabel.innerText = 'GRID DENSITY';
+                if (targetLabel) targetLabel.innerText = 'Peak Stack:';
+                if (targetVal) targetVal.innerText = `${maxColLen} / ${maxAllowed}`;
+                if (inputLabel) inputLabel.innerText = 'Tetris Multiplication: Multiply Any Vertical Pair [Above] × [Below]';
+                inputField.placeholder = 'Type Product (A × B) + Enter';
+
+                // Display Clears count in place of wave level
+                if (levelLabel) levelLabel.innerText = 'Clears';
+                if (levelVal) levelVal.innerText = state.tableProgress;
+
+                if (bar) {
+                    bar.style.width = `${loadPct}%`;
+                    bar.style.backgroundColor = loadPct >= 75 ? 'var(--neon-pink)' : (loadPct >= 50 ? 'var(--neon-yellow)' : 'var(--neon-cyan)');
+                }
+            } else {
+                const coreLabel = document.getElementById('reactor-core-label');
+                if (coreLabel) coreLabel.innerText = 'REACTOR CORE';
+                const totalEl = document.getElementById('current-total');
+                if (totalEl) {
+                    totalEl.innerText = state.reactorTotal;
+                    totalEl.style.color = 'var(--neon-pink)';
+                    totalEl.style.textShadow = '0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink)';
+                }
+                const capLabel = document.getElementById('capacity-label');
+                if (capLabel) capLabel.innerText = 'CAPACITY';
+                const targetLabel = document.getElementById('target-label');
+                if (targetLabel) targetLabel.innerText = 'Target:';
+                const targetVal = document.getElementById('target-val');
+                if (targetVal) targetVal.innerText = state.bankTarget;
+                const inputLabel = document.getElementById('input-label');
+                if (inputLabel) inputLabel.innerText = 'Manual Override Input';
+                inputField.placeholder = 'Type Sum + Enter';
+                const levelLabel = document.getElementById('level-label');
+                if (levelLabel) levelLabel.innerText = 'Level';
+                const levelVal = document.getElementById('level-val');
+                if (levelVal) levelVal.innerText = state.level;
+
+                const pct = Math.min(100, (state.reactorTotal / state.bankTarget) * 100);
+                const bar = document.getElementById('vent-bar');
+                if (bar) {
+                    bar.style.width = `${pct}%`;
+                    if (pct > 80) bar.style.backgroundColor = '#ff0055';
+                    else bar.style.backgroundColor = '#00f3ff';
+                }
             }
 
-            const pct = Math.min(100, (state.reactorTotal / state.bankTarget) * 100);
-            const bar = document.getElementById('vent-bar');
-            bar.style.width = `${pct}%`;
-            if (pct > 80) bar.style.backgroundColor = '#ff0055';
-            else bar.style.backgroundColor = '#00f3ff';
+            const scoreVal = document.getElementById('score-val');
+            if (scoreVal) scoreVal.innerText = state.score;
+
+            const lifeContainer = document.getElementById('lifeline-display');
+            if (lifeContainer) {
+                lifeContainer.innerHTML = '';
+                for (let i = 0; i < 5; i++) {
+                    const heart = document.createElement('span');
+                    heart.className = 'heart';
+                    heart.innerHTML = '♥';
+                    if (i < state.lifelines) {
+                        heart.classList.add('active');
+                    }
+                    lifeContainer.appendChild(heart);
+                }
+            }
         }
 
         inputField.addEventListener('keydown', (e) => {
@@ -1299,27 +3727,210 @@
 
                 const sortedBlocks = [...state.blocks].sort((a, b) => b.y - a.y);
                 let hit = false;
-                for (let i = 0; i < sortedBlocks.length; i++) {
-                    let block = sortedBlocks[i];
-                    let expectedSum = state.reactorTotal + block.value;
 
-                    if (val === expectedSum) {
-                        hit = true;
-                        const originalIndex = state.blocks.indexOf(block);
-                        if (originalIndex > -1) {
-                            state.blocks.splice(originalIndex, 1);
-                            createExplosion(block.x, block.y, block.color);
-                        }
-                        state.reactorTotal = expectedSum;
-                        state.score += (block.value * 10);
-                        playSound('hit');
-                        document.getElementById('reactor-display').classList.add('flash');
-                        setTimeout(() => document.getElementById('reactor-display').classList.remove('flash'), 100);
+                if (state.primaryMode === 'multiplication') {
+                    // 1. Check falling block against the top cube of its lane
+                    for (let i = 0; i < sortedBlocks.length; i++) {
+                        let fallingBlock = sortedBlocks[i];
+                        let col = state.placedGrid[fallingBlock.lane] || [];
+                        let topCube = col.length > 0 ? col[col.length - 1] : null;
 
-                        if (state.reactorTotal >= state.bankTarget) {
-                            triggerVent();
+                        if (topCube) {
+                            let expectedProduct = fallingBlock.value * topCube.value;
+                            if (val === expectedProduct) {
+                                hit = true;
+                                const originalIndex = state.blocks.indexOf(fallingBlock);
+                                if (originalIndex > -1) {
+                                    state.blocks.splice(originalIndex, 1);
+                                    createExplosion(fallingBlock.x, fallingBlock.y, fallingBlock.color);
+                                }
+
+                                // Destroy the top cube below the falling block
+                                createExplosion(topCube.x, topCube.y, topCube.color);
+                                col.pop();
+
+                                const pts = Math.max(50, Math.floor(expectedProduct / 2));
+                                state.score += pts;
+                                state.tableProgress++;
+                                playSound('hit');
+
+                                // In-flow lifeline reward every 10 continuous clears
+                                if (state.tableProgress % 10 === 0 && state.lifelines < 5) {
+                                    state.lifelines++;
+                                    playSound('life-up');
+                                    const container = document.getElementById('game-container');
+                                    if (container) {
+                                        container.classList.add('flash-green');
+                                        setTimeout(() => container.classList.remove('flash-green'), 250);
+                                    }
+                                }
+
+                                const rDisp = document.getElementById('reactor-display');
+                                if (rDisp) {
+                                    rDisp.classList.add('flash-green');
+                                    setTimeout(() => rDisp.classList.remove('flash-green'), 120);
+                                }
+
+                                spawnBlock();
+                                break;
+                            }
                         }
-                        break;
+                    }
+
+                    // 2. If not matched with falling block, check all stacked adjacent vertical pairs in grid
+                    if (!hit) {
+                        const laneCount = getLaneCount();
+                        const blockH = 42;
+                        const spacingY = 44;
+
+                        for (let l = 0; l < laneCount; l++) {
+                            const col = state.placedGrid[l] || [];
+                            if (col.length < 2) continue;
+
+                            for (let r = col.length - 1; r >= 1; r--) {
+                                const cubeAbove = col[r];
+                                const cubeBelow = col[r - 1];
+                                const expectedProduct = cubeAbove.value * cubeBelow.value;
+
+                                if (val === expectedProduct) {
+                                    hit = true;
+                                    createExplosion(cubeAbove.x, cubeAbove.y, cubeAbove.color);
+                                    createExplosion(cubeBelow.x, cubeBelow.y, cubeBelow.color);
+
+                                    // Remove both cubes from the column
+                                    col.splice(r - 1, 2);
+
+                                    // Tetris gravity drop: reposition any remaining cubes above down
+                                    for (let k = r - 1; k < col.length; k++) {
+                                        col[k].row = k;
+                                        col[k].y = canvas.height - (blockH / 2) - 4 - (k * spacingY);
+                                    }
+
+                                    const pts = Math.max(50, Math.floor(expectedProduct / 2));
+                                    state.score += pts;
+                                    state.tableProgress++;
+                                    playSound('hit');
+
+                                    // In-flow lifeline reward every 10 continuous clears
+                                    if (state.tableProgress % 10 === 0 && state.lifelines < 5) {
+                                        state.lifelines++;
+                                        playSound('life-up');
+                                        const container = document.getElementById('game-container');
+                                        if (container) {
+                                            container.classList.add('flash-green');
+                                            setTimeout(() => container.classList.remove('flash-green'), 250);
+                                        }
+                                    }
+
+                                    const rDisp = document.getElementById('reactor-display');
+                                    if (rDisp) {
+                                        rDisp.classList.add('flash-green');
+                                        setTimeout(() => rDisp.classList.remove('flash-green'), 120);
+                                    }
+
+                                    if (state.blocks.length === 0) {
+                                        spawnBlock();
+                                    }
+                                    break;
+                                }
+                            }
+                            if (hit) break;
+                        }
+                    }
+                } else if (state.subMode !== 'accumulator') {
+                    for (let i = 0; i < sortedBlocks.length; i++) {
+                        let block = sortedBlocks[i];
+                        if (val === block.value) {
+                            hit = true;
+                            const originalIndex = state.blocks.indexOf(block);
+                            if (originalIndex > -1) {
+                                state.blocks.splice(originalIndex, 1);
+                                createExplosion(block.x, block.y, block.color);
+                            }
+
+                            const basePts = block.baseNum ? (block.baseNum * 20) : (block.multiplier ? (block.multiplier * 20 + block.table * 10) : 50);
+                            state.score += basePts;
+                            state.tableProgress++;
+                            playSound('hit');
+
+                            const rDisp = document.getElementById('reactor-display');
+                            if (rDisp) {
+                                rDisp.classList.add('flash-green');
+                                setTimeout(() => rDisp.classList.remove('flash-green'), 120);
+                            }
+
+                            if (state.subMode === 'table-seq') {
+                                if (state.tableProgress >= state.tableTarget) {
+                                    if (state.currentTable >= userSettings.table.maxTable) {
+                                        triggerVictory('FACTOR MATRIX MASTERED!', `TABLES ${userSettings.table.minTable} → ${userSettings.table.maxTable} CLEARED`, 'All Multiplier Matrices Synchronized with Core Integrity Intact.');
+                                    } else {
+                                        triggerTableVent();
+                                    }
+                                } else {
+                                    spawnBlock();
+                                }
+                            } else if (state.subMode === 'squares-seq') {
+                                if (state.tableProgress >= state.tableTarget) {
+                                    const tierSize = userSettings.squares.tierSize || 10;
+                                    const totalTiers = Math.ceil(state.allSeqMasterList.length / tierSize);
+                                    if (state.tier >= totalTiers) {
+                                        triggerVictory('SQUARE MATRIX MASTERED!', `ALL SQUARES ${userSettings.squares.minBase}² → ${userSettings.squares.maxBase}² CLEARED`, `All ${state.allSeqMasterList.length} Square Powers Mastered.`);
+                                    } else {
+                                        triggerSquareTierVent();
+                                    }
+                                } else {
+                                    spawnBlock();
+                                }
+                            } else if (state.subMode === 'cubes-seq') {
+                                if (state.tableProgress >= state.tableTarget) {
+                                    const tierSize = userSettings.cubes.tierSize || 7;
+                                    const totalTiers = Math.ceil(state.allSeqMasterList.length / tierSize);
+                                    if (state.tier >= totalTiers) {
+                                        triggerVictory('CUBE MATRIX MASTERED!', `ALL CUBES ${userSettings.cubes.minBase}³ → ${userSettings.cubes.maxBase}³ CLEARED`, `All ${state.allSeqMasterList.length} Cubic Powers Mastered.`);
+                                    } else {
+                                        triggerCubeTierVent();
+                                    }
+                                } else {
+                                    spawnBlock();
+                                }
+                            } else {
+                                // Random & Reverse modes:
+                                if (state.tableProgress >= state.tableTarget) {
+                                    triggerBlitzVent();
+                                } else {
+                                    spawnBlock();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < sortedBlocks.length; i++) {
+                        let block = sortedBlocks[i];
+                        let expectedSum = state.reactorTotal + block.value;
+
+                        if (val === expectedSum) {
+                            hit = true;
+                            const originalIndex = state.blocks.indexOf(block);
+                            if (originalIndex > -1) {
+                                state.blocks.splice(originalIndex, 1);
+                                createExplosion(block.x, block.y, block.color);
+                            }
+                            state.reactorTotal = expectedSum;
+                            state.score += (block.value * 10);
+                            playSound('hit');
+
+                            const rDisp = document.getElementById('reactor-display');
+                            if (rDisp) {
+                                rDisp.classList.add('flash');
+                                setTimeout(() => rDisp.classList.remove('flash'), 100);
+                            }
+
+                            if (state.reactorTotal >= state.bankTarget) {
+                                triggerVent();
+                            }
+                            break;
+                        }
                     }
                 }
 
@@ -1343,6 +3954,7 @@
 
         // Initialize
         profileSystem.init();
+        setPrimaryMode('table');
 
     </script>
 </body>

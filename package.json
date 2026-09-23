@@ -1,0 +1,14 @@
+{
+  "name": "sumfall",
+  "version": "1.5.0",
+  "description": "SumFall: The Accumulator",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e 'process.exit(0)'"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
